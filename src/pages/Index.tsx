@@ -56,6 +56,10 @@ const Index = () => {
     });
   };
 
+  // Get the current active feature
+  const currentFeature = features.find(f => f.id === activeFeature);
+  const CurrentIcon = currentFeature?.icon;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Hero Section */}
@@ -97,10 +101,10 @@ const Index = () => {
             <Card className="backdrop-blur-sm bg-white/80 border-0 shadow-2xl">
               <CardHeader className="text-center border-b bg-gradient-to-r from-blue-50 to-purple-50">
                 <CardTitle className="flex items-center justify-center gap-3 text-2xl">
-                  {features.find(f => f.id === activeFeature)?.icon && (
-                    <features.find(f => f.id === activeFeature)!.icon className="h-8 w-8 text-blue-600" />
+                  {CurrentIcon && (
+                    <CurrentIcon className="h-8 w-8 text-blue-600" />
                   )}
-                  {features.find(f => f.id === activeFeature)?.title}
+                  {currentFeature?.title}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8">
