@@ -1,13 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Send, Bot, User, Volume2, Copy, Languages } from "lucide-react";
+import { Send, Bot, User, Volume2, Copy, Languages, Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { AIService } from "@/services/aiService";
 import { VoiceService } from "@/services/voiceService";
 import { TranslationService } from "@/services/translationService";
+import { ChatbotService } from "@/services/chatbotService";
+import ApiKeySetup from "./ApiKeySetup";
 
 interface Message {
   id: string;
@@ -32,6 +35,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(ChatbotService.hasApiKey());
 
   useEffect(() => {
     // Initialize AI service
@@ -124,7 +128,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
 
   const translateMessage = async (content: string) => {
     try {
-      const translated = await TranslationService.translateText(content, 'es'); // Default to Spanish
+      const translated = await TranslationService.translateText(content, 'es');
       toast({
         title: "Translation",
         description: `Spanish: ${translated}`,
@@ -139,8 +143,37 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
     }
   };
 
+  const exportConversation = () => {
+    if (hasApiKey) {
+      const conversation = ChatbotService.exportConversation();
+      const blob = new Blob([conversation], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `edubot-conversation-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const conversation = JSON.stringify({ messages, exportedAt: new Date().toISOString() }, null, 2);
+      const blob = new Blob([conversation], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `edubot-conversation-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    toast({
+      title: "Exported!",
+      description: "Conversation saved to downloads",
+    });
+  };
+
   return (
     <div className="space-y-4">
+      <ApiKeySetup onApiKeySet={setHasApiKey} />
+
       {extractedText && (
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="p-4">
@@ -155,6 +188,21 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
           <CardContent className="p-4">
             <Badge variant="secondary" className="mb-2">Loading AI Models</Badge>
             <p className="text-sm text-gray-700">AI models are initializing. This may take a moment...</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {hasApiKey && (
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-green-100 text-green-800">Enhanced AI Active</Badge>
+              <span className="text-sm text-green-700">Advanced conversational AI enabled</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={exportConversation}>
+              <Download className="h-4 w-4 mr-2" />
+              Export Chat
+            </Button>
           </CardContent>
         </Card>
       )}

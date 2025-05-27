@@ -1,6 +1,7 @@
 
 import { pipeline } from '@huggingface/transformers';
 import { ClusteringService } from './clusteringService';
+import { ChatbotService } from './chatbotService';
 
 export class AIService {
   private static summarizer: any = null;
@@ -110,6 +111,20 @@ export class AIService {
   }
 
   static async generateResponse(message: string, context?: string): Promise<string> {
+    // Check if enhanced chatbot is available
+    if (ChatbotService.hasApiKey()) {
+      try {
+        let enhancedPrompt = message;
+        if (context) {
+          enhancedPrompt = `Based on this content: "${context.substring(0, 500)}...", please answer: ${message}`;
+        }
+        return await ChatbotService.sendMessage(enhancedPrompt);
+      } catch (error) {
+        console.error('Enhanced chatbot error, falling back to basic mode:', error);
+        // Fall through to basic response generation
+      }
+    }
+
     const topic = await this.detectTopic(message);
     ClusteringService.addQuestion(message, topic);
 
