@@ -1,14 +1,16 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Camera, MessageSquare, Mic, MicOff, Volume2, Upload, Languages, Brain, FileText, Sparkles } from "lucide-react";
+import { Camera, MessageSquare, Mic, MicOff, Volume2, Upload, Languages, Brain, FileText, Sparkles, BarChart3 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ChatInterface from "@/components/ChatInterface";
 import OCRUpload from "@/components/OCRUpload";
 import VoiceRecorder from "@/components/VoiceRecorder";
+import LearningAnalytics from "@/components/LearningAnalytics";
 import FeatureCard from "@/components/FeatureCard";
 import { AIService } from "@/services/aiService";
 
@@ -48,6 +50,13 @@ const Index = () => {
       description: "Get concise summaries of any text",
       icon: FileText,
       color: "bg-gradient-to-br from-purple-500 to-pink-600"
+    },
+    {
+      id: "analytics",
+      title: "Learning Analytics",
+      description: "Track your study progress and insights",
+      icon: BarChart3,
+      color: "bg-gradient-to-br from-indigo-500 to-purple-600"
     }
   ];
 
@@ -109,15 +118,15 @@ const Index = () => {
             <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
               EduBot
             </h1>
-            <p className="text-xl text-gray-600 mb-2">Your AI-Powered Study Companion</p>
-            <p className="text-gray-500">Extract, Summarize, Learn, and Interact with AI</p>
+            <p className="text-xl text-gray-600 mb-2">Your AI-Powered Academic Companion</p>
+            <p className="text-gray-500">Multi-Modal Intelligent Learning Assistant</p>
             <Badge variant="secondary" className="mt-4 animate-bounce">
-              ✨ Powered by Advanced AI
+              ✨ Complete Educational AI Solution
             </Badge>
           </div>
 
           {/* Feature Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
             {features.map((feature, index) => (
               <FeatureCard
                 key={feature.id}
@@ -156,18 +165,22 @@ const Index = () => {
                   />
                 )}
                 
+                {activeFeature === "analytics" && (
+                  <LearningAnalytics />
+                )}
+                
                 {activeFeature === "summarize" && (
                   <div className="space-y-6">
                     <div className="text-center">
                       <FileText className="h-16 w-16 text-purple-600 mx-auto mb-4 animate-pulse" />
                       <h3 className="text-xl font-semibold mb-2">Smart Text Summarization</h3>
-                      <p className="text-gray-600">Paste any text to get an intelligent summary</p>
+                      <p className="text-gray-600">Paste any academic content to get an intelligent summary</p>
                     </div>
                     
                     <Textarea
                       value={summarizeText}
                       onChange={(e) => setSummarizeText(e.target.value)}
-                      placeholder="Paste your text here to summarize..."
+                      placeholder="Paste your academic text, lecture notes, or study material here..."
                       className="min-h-32 resize-none border-2 border-dashed border-purple-200 focus:border-purple-500 transition-colors"
                     />
                     
@@ -178,13 +191,13 @@ const Index = () => {
                       size="lg"
                     >
                       <Brain className="h-5 w-5 mr-2" />
-                      {isSummarizing ? "Generating Summary..." : "Generate Summary"}
+                      {isSummarizing ? "Generating Summary..." : "Generate Smart Summary"}
                     </Button>
 
                     {summary && (
                       <Card className="bg-purple-50 border-purple-200 animate-fade-in">
                         <CardContent className="p-6">
-                          <h4 className="font-medium text-purple-800 mb-3">Summary</h4>
+                          <h4 className="font-medium text-purple-800 mb-3">📚 Academic Summary</h4>
                           <div className="bg-white p-4 rounded-lg border border-purple-200">
                             <p className="text-gray-800">{summary}</p>
                           </div>
@@ -212,24 +225,24 @@ const Index = () => {
               <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <Upload className="h-8 w-8 text-blue-600" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Upload & Extract</h3>
-              <p className="text-gray-600">Upload images or documents to extract text instantly</p>
+              <h3 className="font-semibold text-lg mb-2">Multi-Modal Input</h3>
+              <p className="text-gray-600">Text, images, voice, and documents - all supported</p>
             </div>
             
             <div className="animate-fade-in" style={{ animationDelay: "400ms" }}>
               <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <Brain className="h-8 w-8 text-green-600" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">AI Processing</h3>
-              <p className="text-gray-600">Advanced AI analyzes and processes your content</p>
+              <h3 className="font-semibold text-lg mb-2">Intelligent Processing</h3>
+              <p className="text-gray-600">Advanced AI with learning analytics and topic detection</p>
             </div>
             
             <div className="animate-fade-in" style={{ animationDelay: "600ms" }}>
               <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <Languages className="h-8 w-8 text-purple-600" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Multi-language</h3>
-              <p className="text-gray-600">Get responses in your preferred language</p>
+              <h3 className="font-semibold text-lg mb-2">Accessible Learning</h3>
+              <p className="text-gray-600">Multi-language support with voice input/output</p>
             </div>
           </div>
         </div>
