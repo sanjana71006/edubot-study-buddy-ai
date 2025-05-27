@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mic, MicOff, Volume2, Square, Play } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { VoiceService } from "@/services/voiceService";
 
 interface VoiceRecorderProps {
   isListening: boolean;
@@ -14,45 +15,63 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
   const [recordedText, setRecordedText] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const startListening = () => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const startListening = async () => {
+    try {
       onListeningChange(true);
+      const transcript = await VoiceService.startListening();
       
-      // Simulate voice recognition after 3 seconds
-      setTimeout(() => {
-        onListeningChange(false);
-        const mockText = "Hello, can you help me understand this math problem about quadratic equations?";
-        setRecordedText(mockText);
-        toast({
-          title: "Voice Recorded!",
-          description: "Your question has been transcribed successfully.",
-        });
-      }, 3000);
-    } else {
+      setRecordedText(transcript);
+      onListeningChange(false);
+      
       toast({
-        title: "Not Supported",
-        description: "Speech recognition is not supported in this browser.",
+        title: "Voice Recorded!",
+        description: "Your speech has been transcribed successfully.",
+      });
+    } catch (error) {
+      console.error('Speech recognition error:', error);
+      onListeningChange(false);
+      
+      toast({
+        title: "Recognition Failed",
+        description: "Could not recognize speech. Please try again.",
         variant: "destructive"
       });
     }
   };
 
   const stopListening = () => {
+    VoiceService.stopListening();
     onListeningChange(false);
   };
 
-  const playRecording = () => {
-    if (recordedText && 'speechSynthesis' in window) {
-      setIsPlaying(true);
-      const utterance = new SpeechSynthesisUtterance(recordedText);
-      utterance.onend = () => setIsPlaying(false);
-      speechSynthesis.speak(utterance);
+  const playRecording = async () => {
+    if (recordedText) {
+      try {
+        setIsPlaying(true);
+        await VoiceService.speak(recordedText);
+        setIsPlaying(false);
+        
+        toast({
+          title: "Playback Complete",
+          description: "Audio playback finished.",
+        });
+      } catch (error) {
+        console.error('Speech synthesis error:', error);
+        setIsPlaying(false);
+        
+        toast({
+          title: "Playback Failed",
+          description: "Could not play audio. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
   const clearRecording = () => {
     setRecordedText("");
     setIsPlaying(false);
+    VoiceService.stopSpeaking();
   };
 
   return (

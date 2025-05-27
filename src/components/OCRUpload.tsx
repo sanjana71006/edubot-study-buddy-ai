@@ -1,10 +1,10 @@
-
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Upload, Camera, FileText, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { OCRService } from "@/services/ocrService";
 
 interface OCRUploadProps {
   onTextExtracted: (text: string) => void;
@@ -16,27 +16,37 @@ const OCRUpload = ({ onTextExtracted }: OCRUploadProps) => {
   const [progress, setProgress] = useState(0);
   const [extractedText, setExtractedText] = useState("");
 
-  const simulateOCR = async (file: File) => {
+  const processImage = async (file: File) => {
     setIsProcessing(true);
     setProgress(0);
 
-    // Simulate processing with progress
-    for (let i = 0; i <= 100; i += 10) {
-      setProgress(i);
-      await new Promise(resolve => setTimeout(resolve, 200));
+    try {
+      const text = await OCRService.extractTextFromImage(file, setProgress);
+      
+      if (text.trim()) {
+        setExtractedText(text);
+        onTextExtracted(text);
+        toast({
+          title: "Text Extracted Successfully!",
+          description: "Your image has been processed and text extracted.",
+        });
+      } else {
+        toast({
+          title: "No Text Found",
+          description: "Could not extract text from this image. Please try a clearer image.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('OCR Error:', error);
+      toast({
+        title: "Processing Error",
+        description: "Failed to process the image. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
-
-    // Simulate extracted text
-    const mockText = `Sample extracted text from ${file.name}. This is a demonstration of OCR functionality. The AI has successfully extracted and processed the text content from your uploaded image or document. You can now use this text for summarization, Q&A, or further analysis.`;
-    
-    setExtractedText(mockText);
-    onTextExtracted(mockText);
-    setIsProcessing(false);
-    
-    toast({
-      title: "Text Extracted Successfully!",
-      description: "Your image has been processed and text extracted.",
-    });
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -44,15 +54,21 @@ const OCRUpload = ({ onTextExtracted }: OCRUploadProps) => {
     setIsDragging(false);
     
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      simulateOCR(files[0]);
+    if (files.length > 0 && files[0].type.startsWith('image/')) {
+      processImage(files[0]);
+    } else {
+      toast({
+        title: "Invalid File",
+        description: "Please upload an image file (PNG, JPG, etc.)",
+        variant: "destructive"
+      });
     }
   }, []);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files[0]) {
-      simulateOCR(files[0]);
+      processImage(files[0]);
     }
   };
 
@@ -90,7 +106,7 @@ const OCRUpload = ({ onTextExtracted }: OCRUploadProps) => {
             <p className="text-gray-600 mb-4">or click to browse files</p>
             <input
               type="file"
-              accept="image/*,.pdf"
+              accept="image/*"
               onChange={handleFileInput}
               className="hidden"
               id="file-upload"

@@ -1,11 +1,13 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Send, Bot, User, Volume2, Copy, Languages } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { AIService } from "@/services/aiService";
+import { VoiceService } from "@/services/voiceService";
+import { TranslationService } from "@/services/translationService";
 
 interface Message {
   id: string;
@@ -29,6 +31,20 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    // Initialize AI service
+    AIService.initialize().then(() => {
+      setIsInitialized(true);
+    }).catch(error => {
+      console.error('Failed to initialize AI service:', error);
+      toast({
+        title: "AI Service",
+        description: "AI models are loading in the background. Some features may take a moment to activate.",
+      });
+    });
+  }, []);
 
   const simulateTyping = async (response: string) => {
     setIsTyping(true);
@@ -56,18 +72,23 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue("");
 
-    // Simulate AI response
-    const responses = [
-      "Great question! Based on the context, I can help you understand this concept better.",
-      "Let me analyze that for you. This is an interesting topic that connects to several key principles.",
-      "I can see you're working on this subject. Here's a detailed explanation that should help.",
-      "That's a thoughtful question! Let me break this down into simpler parts for you."
-    ];
-
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    await simulateTyping(randomResponse);
+    try {
+      let response: string;
+      
+      if (extractedText) {
+        response = await AIService.generateResponse(currentInput, extractedText);
+      } else {
+        response = await AIService.generateResponse(currentInput);
+      }
+      
+      await simulateTyping(response);
+    } catch (error) {
+      console.error('Error generating response:', error);
+      await simulateTyping("I apologize, but I'm having trouble processing your request right now. Please try again.");
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -84,13 +105,36 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
     });
   };
 
-  const speakMessage = (content: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(content);
-      speechSynthesis.speak(utterance);
+  const speakMessage = async (content: string) => {
+    try {
+      await VoiceService.speak(content);
       toast({
         title: "Speaking...",
         description: "Playing audio response",
+      });
+    } catch (error) {
+      console.error('Speech synthesis error:', error);
+      toast({
+        title: "Audio Error",
+        description: "Could not play audio response",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const translateMessage = async (content: string) => {
+    try {
+      const translated = await TranslationService.translateText(content, 'es'); // Default to Spanish
+      toast({
+        title: "Translation",
+        description: `Spanish: ${translated}`,
+      });
+    } catch (error) {
+      console.error('Translation error:', error);
+      toast({
+        title: "Translation Error",
+        description: "Could not translate message",
+        variant: "destructive"
       });
     }
   };
@@ -102,6 +146,15 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
           <CardContent className="p-4">
             <Badge variant="secondary" className="mb-2">Extracted Text Context</Badge>
             <p className="text-sm text-gray-700">{extractedText.substring(0, 200)}...</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isInitialized && (
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardContent className="p-4">
+            <Badge variant="secondary" className="mb-2">Loading AI Models</Badge>
+            <p className="text-sm text-gray-700">AI models are initializing. This may take a moment...</p>
           </CardContent>
         </Card>
       )}
@@ -164,6 +217,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
                       size="sm"
                       variant="ghost"
                       className="h-6 w-6 p-0"
+                      onClick={() => translateMessage(message.content)}
                     >
                       <Languages className="h-3 w-3" />
                     </Button>

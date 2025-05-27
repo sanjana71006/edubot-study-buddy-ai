@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,11 +10,15 @@ import ChatInterface from "@/components/ChatInterface";
 import OCRUpload from "@/components/OCRUpload";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import FeatureCard from "@/components/FeatureCard";
+import { AIService } from "@/services/aiService";
 
 const Index = () => {
   const [activeFeature, setActiveFeature] = useState<string>("chat");
   const [extractedText, setExtractedText] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [summarizeText, setSummarizeText] = useState("");
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summary, setSummary] = useState("");
 
   const features = [
     {
@@ -54,6 +57,36 @@ const Index = () => {
       title: "Feature Selected",
       description: `Switched to ${features.find(f => f.id === featureId)?.title}`,
     });
+  };
+
+  const handleSummarize = async () => {
+    if (!summarizeText.trim()) {
+      toast({
+        title: "No Text",
+        description: "Please enter some text to summarize",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSummarizing(true);
+    try {
+      const result = await AIService.summarizeText(summarizeText);
+      setSummary(result);
+      toast({
+        title: "Summary Generated!",
+        description: "Your text has been successfully summarized.",
+      });
+    } catch (error) {
+      console.error('Summarization error:', error);
+      toast({
+        title: "Summarization Failed",
+        description: "Could not summarize the text. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSummarizing(false);
+    }
   };
 
   // Get the current active feature
@@ -132,17 +165,41 @@ const Index = () => {
                     </div>
                     
                     <Textarea
+                      value={summarizeText}
+                      onChange={(e) => setSummarizeText(e.target.value)}
                       placeholder="Paste your text here to summarize..."
                       className="min-h-32 resize-none border-2 border-dashed border-purple-200 focus:border-purple-500 transition-colors"
                     />
                     
                     <Button 
+                      onClick={handleSummarize}
+                      disabled={isSummarizing || !summarizeText.trim()}
                       className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
                       size="lg"
                     >
                       <Brain className="h-5 w-5 mr-2" />
-                      Generate Summary
+                      {isSummarizing ? "Generating Summary..." : "Generate Summary"}
                     </Button>
+
+                    {summary && (
+                      <Card className="bg-purple-50 border-purple-200 animate-fade-in">
+                        <CardContent className="p-6">
+                          <h4 className="font-medium text-purple-800 mb-3">Summary</h4>
+                          <div className="bg-white p-4 rounded-lg border border-purple-200">
+                            <p className="text-gray-800">{summary}</p>
+                          </div>
+                          <Button
+                            className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+                            onClick={() => {
+                              setSummary("");
+                              setSummarizeText("");
+                            }}
+                          >
+                            Summarize Another Text
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
                 )}
               </CardContent>
