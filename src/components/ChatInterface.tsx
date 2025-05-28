@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { VoiceService } from "@/services/voiceService";
 import { TranslationService } from "@/services/translationService";
 import { OCRService } from "@/services/ocrService";
+import { AIService } from "@/services/aiService";
 
 interface Message {
   id: number;
@@ -28,7 +28,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hi! I'm your AI Study Buddy. I can help you with questions, summarize text, extract text from images, and translate content. How can I assist you today? 😊",
+      text: "Hi! I'm your AI Study Buddy. I can help you with questions about Mathematics, Science, Physics, Chemistry, Biology, Computer Science, Programming (Java, Python, C++, JavaScript, etc.), Machine Learning, Engineering, and much more! Upload images, ask questions, or request summaries. How can I assist you today? 😊",
       sender: 'bot',
       timestamp: new Date()
     }
@@ -41,6 +41,13 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Initialize AI Service when component mounts
+    AIService.initialize().catch(error => {
+      console.error('Failed to initialize AI Service:', error);
+    });
+  }, []);
 
   useEffect(() => {
     if (extractedText) {
@@ -69,95 +76,6 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
     setMessages(prev => [...prev, newMessage]);
   };
 
-  const createSummary = (text: string): string => {
-    // Simple summarization logic
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
-    const keyPoints = sentences.slice(0, Math.min(3, sentences.length));
-    return keyPoints.join('. ') + '.';
-  };
-
-  const createExplanation = (context: string, question: string): string => {
-    // Generate contextual explanation
-    const words = question.toLowerCase().split(' ');
-    const keyTerms = words.filter(w => w.length > 3);
-    
-    if (keyTerms.length > 0) {
-      return `Based on the context provided, here's what I can explain about ${keyTerms.join(', ')}:\n\n${context.substring(0, 200)}...`;
-    }
-    
-    return `Based on the provided context: ${context.substring(0, 150)}...`;
-  };
-
-  const generateEducationalResponse = (message: string, context?: string): string => {
-    if (context) {
-      return `Based on the context you've provided, I can help answer questions about this material. The content appears to cover important topics that I can explain in detail.`;
-    }
-    
-    return `I'd be happy to help you learn about this topic! For the most accurate assistance, consider providing some context or specific details about what you'd like to understand.`;
-  };
-
-  const generateAIResponse = async (userMessage: string, context?: string): Promise<string> => {
-    // Enhanced prompt engineering for better responses
-    let prompt = "";
-    
-    if (context) {
-      prompt = `You are an intelligent AI tutor. Based on the following context, provide a comprehensive and accurate answer to the user's question.
-
-Context:
-${context}
-
-User Question: ${userMessage}
-
-Instructions:
-- Answer based primarily on the provided context
-- If the context doesn't contain enough information, clearly state this
-- Provide educational explanations where appropriate
-- Be conversational but informative
-- Use examples when helpful
-
-Answer:`;
-    } else {
-      // General conversation without specific context
-      prompt = `You are an intelligent AI study assistant. Respond to the user's question or request in a helpful, educational manner.
-
-User: ${userMessage}
-
-Instructions:
-- Be conversational and engaging
-- Provide accurate information
-- If asked about academic topics, give detailed explanations
-- Use examples when helpful
-- If you don't know something, admit it honestly
-
-Response:`;
-    }
-
-    try {
-      // Simulate API call with structured response patterns
-      if (userMessage.toLowerCase().includes('color')) {
-        return "Here are 5 common colors:\n1. Red - The color of roses and fire\n2. Blue - The color of the sky and ocean\n3. Green - The color of grass and leaves\n4. Yellow - The color of the sun and bananas\n5. Purple - The color of grapes and lavender\n\nEach color has different psychological associations and uses in design!";
-      }
-      
-      if (userMessage.toLowerCase().includes('hello') || userMessage.toLowerCase().includes('hi')) {
-        return "Hello! I'm your AI Study Buddy. I'm here to help you learn and understand various topics. You can:\n\n• Ask me questions about any subject\n• Upload images for text extraction\n• Request summaries of content\n• Get translations in multiple languages\n• Use voice commands\n\nWhat would you like to explore today?";
-      }
-
-      if (userMessage.toLowerCase().includes('summarize') && context) {
-        return `Here's a concise summary of the provided content:\n\n${createSummary(context)}\n\nWould you like me to explain any specific part in more detail?`;
-      }
-
-      if (userMessage.toLowerCase().includes('explain') && context) {
-        return `Let me explain this content for you:\n\n${createExplanation(context, userMessage)}\n\nDo you have any specific questions about this explanation?`;
-      }
-
-      // Default educational response
-      return `I understand you're asking about: "${userMessage}"\n\n${generateEducationalResponse(userMessage, context)}\n\nFeel free to ask follow-up questions or request clarification on any part!`;
-      
-    } catch (error) {
-      return "I apologize, but I'm having trouble processing your request right now. Please try rephrasing your question or check if there's sufficient context for me to work with.";
-    }
-  };
-
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
@@ -167,7 +85,8 @@ Response:`;
     setIsLoading(true);
 
     try {
-      const response = await generateAIResponse(userMessage, currentContext);
+      // Use the enhanced AI service for comprehensive responses
+      const response = await AIService.generateResponse(userMessage, currentContext);
       addMessage(response, 'bot');
       
       // Auto-speak response
@@ -181,7 +100,8 @@ Response:`;
       }
       
     } catch (error) {
-      addMessage("I apologize, but I encountered an error processing your request. Please try again.", 'bot');
+      console.error('AI Response Error:', error);
+      addMessage("I apologize, but I encountered an error processing your request. Please try again with a different phrasing or check your internet connection.", 'bot');
     } finally {
       setIsLoading(false);
     }
@@ -205,7 +125,6 @@ Response:`;
         description: "Processing your voice command...",
       });
       
-      // Auto-send voice input
       setTimeout(() => {
         if (transcript.trim()) {
           handleSendMessage();
@@ -257,12 +176,12 @@ Response:`;
     }
 
     setIsLoading(true);
-    addMessage("🧠 Creating a summary of the current content...", 'bot');
+    addMessage("🧠 Creating an intelligent summary of the current content...", 'bot');
 
     try {
-      const summary = createSummary(currentContext);
-      setCurrentContext(summary); // Update context to summary
-      addMessage(`✅ Summary:\n\n${summary}`, 'bot');
+      const summary = await AIService.summarizeText(currentContext);
+      setCurrentContext(summary);
+      addMessage(`✅ AI-Generated Summary:\n\n${summary}`, 'bot');
       
       await VoiceService.speakResponse(summary);
       
@@ -290,7 +209,7 @@ Response:`;
   const clearChat = () => {
     setMessages([{
       id: 1,
-      text: "Chat cleared! How can I help you today? 😊",
+      text: "Chat cleared! I'm ready to help with any academic question - Mathematics, Science, Programming, Engineering, Biology, Physics, Chemistry... How can I assist you today? 😊",
       sender: 'bot',
       timestamp: new Date()
     }]);
@@ -308,7 +227,7 @@ Response:`;
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-600" />
-            <span className="font-medium">AI Study Assistant</span>
+            <span className="font-medium">AI Study Assistant - All Subjects</span>
             {currentContext && (
               <Badge variant="secondary" className="bg-green-100 text-green-800">
                 Context Available
@@ -336,7 +255,7 @@ Response:`;
             
             <Button size="sm" variant="outline" onClick={summarizeCurrentContext}>
               <FileText className="h-4 w-4 mr-1" />
-              Summarize
+              AI Summarize
             </Button>
             
             <select
@@ -403,7 +322,7 @@ Response:`;
             <div className="bg-gray-100 p-3 rounded-lg rounded-bl-sm">
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                AI is thinking...
+                AI is processing your question...
               </div>
             </div>
           </div>
@@ -417,7 +336,7 @@ Response:`;
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Type your question or request..."
+            placeholder="Ask anything: Math, Science, Programming, Engineering, Biology, Physics, Chemistry..."
             className="flex-1"
             onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
             disabled={isLoading}
