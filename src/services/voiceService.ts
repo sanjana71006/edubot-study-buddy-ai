@@ -49,7 +49,7 @@ export class VoiceService {
   private static recognition: SpeechRecognition | null = null;
   private static synthesis: SpeechSynthesis = window.speechSynthesis;
   private static currentLanguage: string = 'en-US';
-  private static isSpeaking: boolean = false;
+  private static _isSpeaking: boolean = false;
 
   static async initializeSpeechRecognition(language: string = 'en-US'): Promise<SpeechRecognition> {
     const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -105,7 +105,7 @@ export class VoiceService {
     return new Promise((resolve, reject) => {
       // Cancel any ongoing speech
       this.synthesis.cancel();
-      this.isSpeaking = false;
+      this._isSpeaking = false;
       
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
@@ -121,16 +121,16 @@ export class VoiceService {
       }
       
       utterance.onstart = () => {
-        this.isSpeaking = true;
+        this._isSpeaking = true;
       };
       
       utterance.onend = () => {
-        this.isSpeaking = false;
+        this._isSpeaking = false;
         resolve();
       };
       
       utterance.onerror = (event) => {
-        this.isSpeaking = false;
+        this._isSpeaking = false;
         reject(new Error(`Speech synthesis error: ${event.error}`));
       };
       
@@ -156,11 +156,11 @@ export class VoiceService {
 
   static stopSpeaking(): void {
     this.synthesis.cancel();
-    this.isSpeaking = false;
+    this._isSpeaking = false;
   }
 
   static isSpeaking(): boolean {
-    return this.isSpeaking;
+    return this._isSpeaking;
   }
 
   static getAvailableLanguages(): { code: string; name: string }[] {
