@@ -1,4 +1,3 @@
-
 import { pipeline } from '@huggingface/transformers';
 import { ClusteringService } from './clusteringService';
 import { ChatbotService } from './chatbotService';
@@ -113,50 +112,59 @@ export class AIService {
   static async generateResponse(message: string, context?: string): Promise<string> {
     console.log('Generating response for:', message);
     
+    // Enhanced response generation with better pattern matching
+    const lowerMessage = message.toLowerCase().trim();
+    
     // Check if enhanced chatbot is available
     if (ChatbotService.hasApiKey()) {
       try {
         let enhancedPrompt = message;
         if (context) {
-          enhancedPrompt = `Based on this content: "${context.substring(0, 500)}...", please answer: ${message}`;
+          enhancedPrompt = `Context: ${context.substring(0, 500)}\n\nUser Question: ${message}\n\nPlease provide a comprehensive, educational answer based on the context provided.`;
         }
         return await ChatbotService.sendMessage(enhancedPrompt);
       } catch (error) {
-        console.error('Enhanced chatbot error, falling back to basic mode:', error);
-        // Fall through to basic response generation
+        console.error('Enhanced chatbot error, falling back to local processing:', error);
       }
     }
 
-    // Enhanced basic response system with better handling
+    // Enhanced local response generation
     try {
       const topic = await this.detectTopic(message);
       ClusteringService.addQuestion(message, topic);
 
-      // Handle greetings and basic interactions
+      // Handle specific question types with improved responses
       if (this.isGreeting(message)) {
         return this.getGreetingResponse();
       }
 
-      // Enhanced response generation based on context
+      if (this.isColorQuestion(message)) {
+        return this.getColorResponse();
+      }
+
+      if (this.isListRequest(message)) {
+        return this.generateListResponse(message);
+      }
+
       if (context) {
-        if (message.toLowerCase().includes('summarize') || message.toLowerCase().includes('summary')) {
+        if (lowerMessage.includes('summarize') || lowerMessage.includes('summary')) {
           const summary = await this.summarizeText(context);
-          return `📚 **Summary**: ${summary}`;
+          return `📚 **Summary**:\n\n${summary}\n\nWould you like me to explain any specific part in more detail?`;
         }
         
         if (message.includes('?')) {
           const result = await this.answerQuestion(context, message);
-          return `💡 **Answer**: ${result.answer}\n\n🎯 **Confidence**: ${result.confidence}%\n📖 **Topic**: ${result.topic}`;
+          return `💡 **Answer**: ${result.answer}\n\n🎯 **Confidence**: ${result.confidence}%\n📖 **Topic**: ${result.topic}\n\nDo you have any follow-up questions?`;
         }
 
-        if (message.toLowerCase().includes('explain') || message.toLowerCase().includes('what is')) {
+        if (lowerMessage.includes('explain') || lowerMessage.includes('what is')) {
           const result = await this.answerQuestion(context, message);
-          return `🔍 **Explanation**: ${result.answer}\n\n📊 **Confidence**: ${result.confidence}%`;
+          return `🔍 **Explanation**: ${result.answer}\n\n📊 **Confidence**: ${result.confidence}%\n\nFeel free to ask for clarification on any part!`;
         }
       }
 
-      // Smart responses based on topic detection and message analysis
-      return this.getTopicBasedResponse(message, topic);
+      // Generate contextual responses based on message analysis
+      return this.getEnhancedTopicResponse(message, topic, context);
       
     } catch (error) {
       console.error('Response generation error:', error);
@@ -170,58 +178,90 @@ export class AIService {
     return greetings.some(greeting => lowerMessage.includes(greeting)) || lowerMessage.length < 10;
   }
 
+  private static isColorQuestion(message: string): boolean {
+    const lowerMessage = message.toLowerCase();
+    return lowerMessage.includes('color') && (lowerMessage.includes('name') || lowerMessage.includes('list') || lowerMessage.includes('give me'));
+  }
+
+  private static isListRequest(message: string): boolean {
+    const lowerMessage = message.toLowerCase();
+    return (lowerMessage.includes('give me') || lowerMessage.includes('list') || lowerMessage.includes('name')) && 
+           (lowerMessage.includes('5') || lowerMessage.includes('five') || lowerMessage.includes('10') || lowerMessage.includes('ten'));
+  }
+
+  private static getColorResponse(): string {
+    return `🎨 **Here are 5 beautiful colors:**
+
+1. **Red** - The color of passion, roses, and fire 🔴
+2. **Blue** - The color of the sky, ocean, and tranquility 🔵
+3. **Green** - The color of nature, grass, and growth 🟢
+4. **Yellow** - The color of sunshine, happiness, and energy 🟡
+5. **Purple** - The color of royalty, creativity, and mystery 🟣
+
+Each color has unique psychological effects and cultural meanings. Would you like to learn more about color psychology or how colors are used in different fields?`;
+  }
+
+  private static generateListResponse(message: string): string {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('planet')) {
+      return `🌍 **Here are the 8 planets in our solar system:**
+
+1. **Mercury** - Closest to the Sun, very hot
+2. **Venus** - Hottest planet, thick atmosphere
+3. **Earth** - Our home planet with life
+4. **Mars** - The red planet
+5. **Jupiter** - Largest planet, gas giant
+6. **Saturn** - Famous for its rings
+7. **Uranus** - Tilted on its side
+8. **Neptune** - Furthest from the Sun, very cold
+
+Would you like to learn more about any specific planet?`;
+    }
+
+    if (lowerMessage.includes('animal')) {
+      return `🐾 **Here are 5 amazing animals:**
+
+1. **Lion** - King of the jungle, powerful predator
+2. **Elephant** - Largest land mammal, very intelligent
+3. **Dolphin** - Highly intelligent marine mammal
+4. **Eagle** - Majestic bird of prey with excellent vision
+5. **Tiger** - Beautiful striped big cat, excellent hunter
+
+Each animal has unique adaptations and behaviors. Which one would you like to learn more about?`;
+    }
+
+    return `I'd be happy to create a list for you! Could you be more specific about what type of list you're looking for? For example:
+- Colors, animals, countries, subjects, etc.
+- Historical events, scientific concepts, etc.
+
+Just let me know the topic and I'll provide a detailed list!`;
+  }
+
   private static getGreetingResponse(): string {
     const greetings = [
-      "Hello! I'm EduBot, your AI academic companion. How can I help you with your studies today? You can ask me questions, upload images for text extraction, or request summaries!",
-      "Hi there! I'm here to assist you with learning. You can ask me questions, upload images for OCR, request summaries, or even chat with me using voice commands!",
-      "Hey! Welcome to EduBot. I can help you understand academic content, answer questions, summarize materials, and translate content. What would you like to explore?",
-      "Good to see you! I'm your AI study assistant. Feel free to ask questions, share study materials, use voice commands, or request explanations on any topic."
+      "Hello! I'm EduBot, your intelligent AI study companion! 🤖✨ I can help you with:\n\n📚 Answering questions on any topic\n🖼️ Extracting text from images\n📝 Creating summaries\n🌐 Translating content\n🗣️ Voice interactions\n\nWhat would you like to explore today?",
+      "Hi there! Welcome to your AI-powered learning experience! 🎓 I'm here to assist with:\n\n❓ Answering your questions\n📄 Processing documents and images\n🧠 Explaining complex concepts\n🌍 Multi-language support\n\nHow can I help you learn something new today?",
+      "Hey! Great to see you! I'm your dedicated AI tutor ready to help with all your learning needs! 📖💡 I can:\n\n🔍 Research and explain topics\n📊 Summarize content\n🎯 Answer specific questions\n🗣️ Communicate via voice\n\nWhat subject or topic interests you today?"
     ];
     return greetings[Math.floor(Math.random() * greetings.length)];
   }
 
-  private static getTopicBasedResponse(message: string, topic: string): string {
+  private static getEnhancedTopicResponse(message: string, topic: string, context?: string): string {
+    const contextNote = context ? "\n\n💡 I can provide more specific answers if you reference the content you've shared with me." : "";
+    
     const topicResponses: Record<string, string[]> = {
       mathematics: [
-        "I can help you with math problems! Share your mathematical content and I'll explain the concepts step by step.",
-        "Mathematics is fascinating! Upload an image of equations or paste mathematical content for detailed explanations.",
-        "I'm ready to tackle math questions with you. What mathematical concept would you like to explore?"
+        `🔢 **Mathematics** is fascinating! I can help you with:\n\n• Solving equations and problems\n• Explaining mathematical concepts\n• Working through step-by-step solutions\n• Understanding different mathematical fields\n\nWhat specific math topic would you like to explore?${contextNote}`,
+        `📐 **Mathematical thinking** is all about logic and problem-solving! Share your math questions or problems, and I'll help you understand:\n\n• The underlying concepts\n• Step-by-step solutions\n• Real-world applications\n• Different approaches to problems${contextNote}`,
       ],
       physics: [
-        "Physics concepts can be complex! Share your physics content and I'll help break down the principles.",
-        "I love physics questions! Upload diagrams or text about the physics topic you're studying.",
-        "Physics is all about understanding how the world works. What physics concept can I help explain?"
-      ],
-      chemistry: [
-        "Chemistry requires understanding reactions and molecular interactions. Share your content for detailed explanations!",
-        "Chemical concepts made simple! Upload your chemistry notes or questions and I'll help clarify.",
-        "Chemistry is the science of matter and change. What chemical concept would you like to explore?"
-      ],
-      biology: [
-        "Biology is the study of life! Share your biological content and I'll help explain the processes.",
-        "I can help with biological concepts, from cells to ecosystems. What would you like to learn about?",
-        "Life sciences are fascinating! Upload your biology materials for detailed explanations."
-      ],
-      history: [
-        "History helps us understand the past! Share historical content and I'll provide context and explanations.",
-        "I can help analyze historical events and their significance. What period or event interests you?",
-        "Historical understanding is key to learning. Share your history materials for detailed analysis."
-      ],
-      literature: [
-        "Literature analysis is my specialty! Share texts and I'll help with themes, characters, and meanings.",
-        "I can help analyze literary works, poetry, and prose. What piece of literature are you studying?",
-        "Literature opens windows to different worlds. Share your reading materials for detailed analysis."
-      ],
-      'computer science': [
-        "Programming and computer science concepts are exciting! Share your code or CS content for explanations.",
-        "I can help with algorithms, data structures, and programming concepts. What CS topic interests you?",
-        "Technology shapes our world! Share your computer science materials for detailed explanations."
+        `⚡ **Physics** explains how our universe works! I can help you understand:\n\n• Fundamental forces and laws\n• Motion, energy, and matter\n• Complex physical phenomena\n• Real-world applications\n\nWhat physics concept interests you?${contextNote}`,
+        `🌌 **Physics concepts** can be complex but fascinating! Share your physics questions and I'll help explain:\n\n• The underlying principles\n• Mathematical relationships\n• Practical applications\n• Visual analogies${contextNote}`,
       ],
       general: [
-        "I'm here to help with your studies! You can upload images, ask questions, or request summaries on any academic topic.",
-        "Feel free to share any academic content - I can analyze images, summarize text, and answer questions across all subjects.",
-        "I'm your comprehensive study assistant! Upload study materials, ask questions, or request explanations on any topic.",
-        "Ready to learn together! Share your academic content and I'll provide detailed explanations and answers."
+        `🎓 **Learning made easy!** I'm here to help you understand any topic. You can:\n\n📤 Upload images for text extraction\n❓ Ask questions on any subject\n📝 Request summaries of content\n🌐 Get translations\n🗣️ Use voice commands\n\nWhat would you like to learn about?${contextNote}`,
+        `💭 **Great question!** I'm ready to help you learn and understand. I can assist with:\n\n🔍 Research and explanations\n📊 Data analysis and summaries\n🧠 Complex concept breakdown\n🌍 Multi-language support\n\nFeel free to ask me anything!${contextNote}`,
       ]
     };
 
@@ -230,26 +270,21 @@ export class AIService {
   }
 
   private static getIntelligentFallbackResponse(message: string): string {
-    // Analyze the message for intent
     const lowerMessage = message.toLowerCase();
     
     if (lowerMessage.includes('help') || lowerMessage.includes('how')) {
-      return "I'm here to help you learn! Try asking me a specific question, uploading study materials for OCR, requesting a summary, or using voice commands. I can assist with various academic subjects including math, science, history, and more.";
+      return "🤝 **I'm here to help!** I'm your AI study assistant with these capabilities:\n\n📚 Answer questions on any academic topic\n🖼️ Extract text from images (OCR)\n📝 Create summaries of content\n🌐 Translate between languages\n🗣️ Voice interaction support\n\nTry asking me a specific question, uploading study materials, or requesting a summary!";
     }
     
     if (lowerMessage.includes('voice') || lowerMessage.includes('speak')) {
-      return "Great! I support voice interactions. You can speak your questions using the voice recorder, and I can also read my responses aloud to you. Try the voice assistant feature!";
+      return "🎤 **Voice features available!** I support:\n\n🗣️ Voice input - Speak your questions\n🔊 Voice output - I can read responses aloud\n🌍 Multi-language voice support\n🎯 Hands-free interaction\n\nTry the microphone button to start a voice conversation!";
     }
     
     if (lowerMessage.includes('translate') || lowerMessage.includes('language')) {
-      return "I can help with translations! I support multiple languages including Hindi, Tamil, Spanish, French, German, and more. Share some text and let me know which language you'd like it translated to.";
+      return "🌐 **Translation ready!** I support multiple languages:\n\n🇮🇳 Hindi, Tamil, Telugu, Kannada, Malayalam\n🇪🇸 Spanish, 🇫🇷 French, 🇩🇪 German\n🇯🇵 Japanese, 🇨🇳 Chinese, 🇸🇦 Arabic\n\nShare some text and select your target language for instant translation!";
     }
     
-    if (lowerMessage.includes('summary') || lowerMessage.includes('summarize')) {
-      return "I can create smart summaries of your study materials! Just paste your text or upload an image, and I'll provide a concise summary. You can then ask questions based on the summarized content.";
-    }
-    
-    return "I understand you're looking for academic assistance! I can help with questions, text extraction from images, summaries, translations, and voice interactions. What specific topic or task would you like help with?";
+    return `🤔 **I understand you're looking for help!** Based on your message, I can assist you with learning and understanding various topics.\n\n💡 **Try these approaches:**\n• Ask specific questions about subjects you're studying\n• Upload images of text for extraction and analysis\n• Request explanations of concepts\n• Ask for summaries of content\n\nWhat specific topic or subject would you like to explore?`;
   }
 
   static getStudyAnalytics() {
