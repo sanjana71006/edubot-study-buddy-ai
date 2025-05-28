@@ -69,6 +69,33 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
     setMessages(prev => [...prev, newMessage]);
   };
 
+  const createSummary = (text: string): string => {
+    // Simple summarization logic
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    const keyPoints = sentences.slice(0, Math.min(3, sentences.length));
+    return keyPoints.join('. ') + '.';
+  };
+
+  const createExplanation = (context: string, question: string): string => {
+    // Generate contextual explanation
+    const words = question.toLowerCase().split(' ');
+    const keyTerms = words.filter(w => w.length > 3);
+    
+    if (keyTerms.length > 0) {
+      return `Based on the context provided, here's what I can explain about ${keyTerms.join(', ')}:\n\n${context.substring(0, 200)}...`;
+    }
+    
+    return `Based on the provided context: ${context.substring(0, 150)}...`;
+  };
+
+  const generateEducationalResponse = (message: string, context?: string): string => {
+    if (context) {
+      return `Based on the context you've provided, I can help answer questions about this material. The content appears to cover important topics that I can explain in detail.`;
+    }
+    
+    return `I'd be happy to help you learn about this topic! For the most accurate assistance, consider providing some context or specific details about what you'd like to understand.`;
+  };
+
   const generateAIResponse = async (userMessage: string, context?: string): Promise<string> => {
     // Enhanced prompt engineering for better responses
     let prompt = "";
@@ -116,47 +143,20 @@ Response:`;
       }
 
       if (userMessage.toLowerCase().includes('summarize') && context) {
-        return `Here's a concise summary of the provided content:\n\n${this.createSummary(context)}\n\nWould you like me to explain any specific part in more detail?`;
+        return `Here's a concise summary of the provided content:\n\n${createSummary(context)}\n\nWould you like me to explain any specific part in more detail?`;
       }
 
       if (userMessage.toLowerCase().includes('explain') && context) {
-        return `Let me explain this content for you:\n\n${this.createExplanation(context, userMessage)}\n\nDo you have any specific questions about this explanation?`;
+        return `Let me explain this content for you:\n\n${createExplanation(context, userMessage)}\n\nDo you have any specific questions about this explanation?`;
       }
 
       // Default educational response
-      return `I understand you're asking about: "${userMessage}"\n\n${this.generateEducationalResponse(userMessage, context)}\n\nFeel free to ask follow-up questions or request clarification on any part!`;
+      return `I understand you're asking about: "${userMessage}"\n\n${generateEducationalResponse(userMessage, context)}\n\nFeel free to ask follow-up questions or request clarification on any part!`;
       
     } catch (error) {
       return "I apologize, but I'm having trouble processing your request right now. Please try rephrasing your question or check if there's sufficient context for me to work with.";
     }
   };
-
-  private createSummary(text: string): string {
-    // Simple summarization logic
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
-    const keyPoints = sentences.slice(0, Math.min(3, sentences.length));
-    return keyPoints.join('. ') + '.';
-  }
-
-  private createExplanation(context: string, question: string): string {
-    // Generate contextual explanation
-    const words = question.toLowerCase().split(' ');
-    const keyTerms = words.filter(w => w.length > 3);
-    
-    if (keyTerms.length > 0) {
-      return `Based on the context provided, here's what I can explain about ${keyTerms.join(', ')}:\n\n${context.substring(0, 200)}...`;
-    }
-    
-    return `Based on the provided context: ${context.substring(0, 150)}...`;
-  }
-
-  private generateEducationalResponse(message: string, context?: string): string {
-    if (context) {
-      return `Based on the context you've provided, I can help answer questions about this material. The content appears to cover important topics that I can explain in detail.`;
-    }
-    
-    return `I'd be happy to help you learn about this topic! For the most accurate assistance, consider providing some context or specific details about what you'd like to understand.`;
-  }
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
