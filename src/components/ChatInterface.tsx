@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Send, Bot, User, Volume2, Copy, Languages, Download } from "lucide-react";
+import { Send, Bot, User, Volume2, Copy, Languages, Download, VolumeX } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { AIService } from "@/services/aiService";
 import { VoiceService } from "@/services/voiceService";
@@ -27,7 +27,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Hello! I'm EduBot, your AI study companion. Ask me questions about any topic, upload images for OCR, or let me help you summarize content!",
+      content: "Hello! I'm EduBot, your AI study companion. Ask me questions about any topic, upload images for OCR, or let me help you summarize content! I can also respond with voice.",
       sender: "bot",
       timestamp: new Date()
     }
@@ -36,6 +36,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(ChatbotService.hasApiKey());
+  const [autoVoiceEnabled, setAutoVoiceEnabled] = useState(true);
 
   useEffect(() => {
     // Initialize AI service
@@ -63,6 +64,15 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
     
     setMessages(prev => [...prev, newMessage]);
     setIsTyping(false);
+
+    // Auto-speak bot responses if enabled
+    if (autoVoiceEnabled) {
+      try {
+        await VoiceService.speakResponse(response);
+      } catch (error) {
+        console.error('Auto-voice error:', error);
+      }
+    }
   };
 
   const handleSendMessage = async () => {
@@ -91,7 +101,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
       await simulateTyping(response);
     } catch (error) {
       console.error('Error generating response:', error);
-      await simulateTyping("I apologize, but I'm having trouble processing your request right now. Please try again.");
+      await simulateTyping("I apologize, but I'm having trouble processing your request right now. Please try asking your question in a different way, or check if you have an API key configured for enhanced responses.");
     }
   };
 
@@ -111,7 +121,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
 
   const speakMessage = async (content: string) => {
     try {
-      await VoiceService.speak(content);
+      await VoiceService.speakResponse(content);
       toast({
         title: "Speaking...",
         description: "Playing audio response",
@@ -199,10 +209,21 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
               <Badge variant="secondary" className="bg-green-100 text-green-800">Enhanced AI Active</Badge>
               <span className="text-sm text-green-700">Advanced conversational AI enabled</span>
             </div>
-            <Button variant="outline" size="sm" onClick={exportConversation}>
-              <Download className="h-4 w-4 mr-2" />
-              Export Chat
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setAutoVoiceEnabled(!autoVoiceEnabled)}
+                className={autoVoiceEnabled ? "bg-blue-100" : ""}
+              >
+                {autoVoiceEnabled ? <Volume2 className="h-4 w-4 mr-2" /> : <VolumeX className="h-4 w-4 mr-2" />}
+                Auto Voice
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportConversation}>
+                <Download className="h-4 w-4 mr-2" />
+                Export Chat
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -49,6 +49,7 @@ export class VoiceService {
   private static recognition: SpeechRecognition | null = null;
   private static synthesis: SpeechSynthesis = window.speechSynthesis;
   private static currentLanguage: string = 'en-US';
+  private static isSpeaking: boolean = false;
 
   static async initializeSpeechRecognition(language: string = 'en-US'): Promise<SpeechRecognition> {
     const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -104,6 +105,7 @@ export class VoiceService {
     return new Promise((resolve, reject) => {
       // Cancel any ongoing speech
       this.synthesis.cancel();
+      this.isSpeaking = false;
       
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
@@ -118,11 +120,34 @@ export class VoiceService {
         utterance.voice = voice;
       }
       
-      utterance.onend = () => resolve();
-      utterance.onerror = (event) => reject(new Error(`Speech synthesis error: ${event.error}`));
+      utterance.onstart = () => {
+        this.isSpeaking = true;
+      };
+      
+      utterance.onend = () => {
+        this.isSpeaking = false;
+        resolve();
+      };
+      
+      utterance.onerror = (event) => {
+        this.isSpeaking = false;
+        reject(new Error(`Speech synthesis error: ${event.error}`));
+      };
       
       this.synthesis.speak(utterance);
     });
+  }
+
+  static async speakResponse(response: string, language: string = 'en-US'): Promise<void> {
+    // Clean the response text for better speech synthesis
+    const cleanedResponse = response
+      .replace(/\*\*/g, '') // Remove markdown bold
+      .replace(/📚|💡|🎯|📖|🔍|📊/g, '') // Remove emojis
+      .replace(/\n\n/g, '. ') // Replace double newlines with periods
+      .replace(/\n/g, ' ') // Replace single newlines with spaces
+      .trim();
+
+    return this.speak(cleanedResponse, language);
   }
 
   static getAvailableVoices(): SpeechSynthesisVoice[] {
@@ -131,6 +156,11 @@ export class VoiceService {
 
   static stopSpeaking(): void {
     this.synthesis.cancel();
+    this.isSpeaking = false;
+  }
+
+  static isSpeaking(): boolean {
+    return this.isSpeaking;
   }
 
   static getAvailableLanguages(): { code: string; name: string }[] {
@@ -138,11 +168,23 @@ export class VoiceService {
       { code: 'en-US', name: 'English (US)' },
       { code: 'hi-IN', name: 'Hindi' },
       { code: 'ta-IN', name: 'Tamil' },
+      { code: 'te-IN', name: 'Telugu' },
+      { code: 'kn-IN', name: 'Kannada' },
+      { code: 'ml-IN', name: 'Malayalam' },
       { code: 'es-ES', name: 'Spanish' },
       { code: 'fr-FR', name: 'French' },
       { code: 'de-DE', name: 'German' },
       { code: 'ja-JP', name: 'Japanese' },
       { code: 'zh-CN', name: 'Chinese' }
     ];
+  }
+
+  static async startConversation(): Promise<string> {
+    try {
+      await this.speak("Hello! I'm EduBot. How can I help you with your studies today?");
+      return await this.startListening();
+    } catch (error) {
+      throw error;
+    }
   }
 }

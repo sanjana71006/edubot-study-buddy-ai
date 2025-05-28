@@ -127,7 +127,7 @@ export class AIService {
       }
     }
 
-    // Enhanced basic response system
+    // Enhanced basic response system with better handling
     try {
       const topic = await this.detectTopic(message);
       ClusteringService.addQuestion(message, topic);
@@ -160,22 +160,22 @@ export class AIService {
       
     } catch (error) {
       console.error('Response generation error:', error);
-      return this.getFallbackResponse();
+      return this.getIntelligentFallbackResponse(message);
     }
   }
 
   private static isGreeting(message: string): boolean {
-    const greetings = ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening', 'how are you'];
+    const greetings = ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening', 'how are you', 'greetings'];
     const lowerMessage = message.toLowerCase().trim();
     return greetings.some(greeting => lowerMessage.includes(greeting)) || lowerMessage.length < 10;
   }
 
   private static getGreetingResponse(): string {
     const greetings = [
-      "Hello! I'm EduBot, your AI academic companion. How can I help you with your studies today?",
-      "Hi there! I'm here to assist you with learning. You can ask me questions, upload images for text extraction, or request summaries!",
-      "Hey! Welcome to EduBot. I can help you understand academic content, answer questions, and summarize materials. What would you like to explore?",
-      "Good to see you! I'm your AI study assistant. Feel free to ask questions, share study materials, or request explanations on any topic."
+      "Hello! I'm EduBot, your AI academic companion. How can I help you with your studies today? You can ask me questions, upload images for text extraction, or request summaries!",
+      "Hi there! I'm here to assist you with learning. You can ask me questions, upload images for OCR, request summaries, or even chat with me using voice commands!",
+      "Hey! Welcome to EduBot. I can help you understand academic content, answer questions, summarize materials, and translate content. What would you like to explore?",
+      "Good to see you! I'm your AI study assistant. Feel free to ask questions, share study materials, use voice commands, or request explanations on any topic."
     ];
     return greetings[Math.floor(Math.random() * greetings.length)];
   }
@@ -229,11 +229,36 @@ export class AIService {
     return responses[Math.floor(Math.random() * responses.length)];
   }
 
-  private static getFallbackResponse(): string {
-    return "I'm here to help you learn! Try asking me a specific question, uploading study materials, or requesting a summary. I can assist with various academic subjects including math, science, history, and more.";
+  private static getIntelligentFallbackResponse(message: string): string {
+    // Analyze the message for intent
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('help') || lowerMessage.includes('how')) {
+      return "I'm here to help you learn! Try asking me a specific question, uploading study materials for OCR, requesting a summary, or using voice commands. I can assist with various academic subjects including math, science, history, and more.";
+    }
+    
+    if (lowerMessage.includes('voice') || lowerMessage.includes('speak')) {
+      return "Great! I support voice interactions. You can speak your questions using the voice recorder, and I can also read my responses aloud to you. Try the voice assistant feature!";
+    }
+    
+    if (lowerMessage.includes('translate') || lowerMessage.includes('language')) {
+      return "I can help with translations! I support multiple languages including Hindi, Tamil, Spanish, French, German, and more. Share some text and let me know which language you'd like it translated to.";
+    }
+    
+    if (lowerMessage.includes('summary') || lowerMessage.includes('summarize')) {
+      return "I can create smart summaries of your study materials! Just paste your text or upload an image, and I'll provide a concise summary. You can then ask questions based on the summarized content.";
+    }
+    
+    return "I understand you're looking for academic assistance! I can help with questions, text extraction from images, summaries, translations, and voice interactions. What specific topic or task would you like help with?";
   }
 
   static getStudyAnalytics() {
     return ClusteringService.getStudyStats();
+  }
+
+  static async processImageAndSummarize(text: string): Promise<{ summary: string; topic: string }> {
+    const summary = await this.summarizeText(text);
+    const topic = await this.detectTopic(text);
+    return { summary, topic };
   }
 }
