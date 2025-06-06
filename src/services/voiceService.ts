@@ -50,6 +50,7 @@ export class VoiceService {
   private static synthesis: SpeechSynthesis = window.speechSynthesis;
   private static currentLanguage: string = 'en-US';
   private static _isSpeaking: boolean = false;
+  private static currentUtterance: SpeechSynthesisUtterance | null = null;
 
   static async initializeSpeechRecognition(language: string = 'en-US'): Promise<SpeechRecognition> {
     const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -102,16 +103,18 @@ export class VoiceService {
       throw new Error('Speech synthesis not supported');
     }
     
+    // Always cancel any current speech before starting new one
+    this.forceStop();
+    
     return new Promise((resolve, reject) => {
-      // Cancel any ongoing speech
-      this.synthesis.cancel();
-      this._isSpeaking = false;
-      
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
       utterance.rate = rate;
       utterance.pitch = 1;
       utterance.volume = 1;
+      
+      // Store current utterance reference
+      this.currentUtterance = utterance;
       
       // Try to find a voice that matches the language
       const voices = this.synthesis.getVoices();
@@ -126,12 +129,19 @@ export class VoiceService {
       
       utterance.onend = () => {
         this._isSpeaking = false;
+        this.currentUtterance = null;
         resolve();
       };
       
       utterance.onerror = (event) => {
         this._isSpeaking = false;
-        reject(new Error(`Speech synthesis error: ${event.error}`));
+        this.currentUtterance = null;
+        // Don't reject on 'interrupted' error as it's expected when stopping
+        if (event.error !== 'interrupted') {
+          reject(new Error(`Speech synthesis error: ${event.error}`));
+        } else {
+          resolve();
+        }
       };
       
       this.synthesis.speak(utterance);
@@ -142,7 +152,7 @@ export class VoiceService {
     // Clean the response text for better speech synthesis
     const cleanedResponse = response
       .replace(/\*\*/g, '') // Remove markdown bold
-      .replace(/📚|💡|🎯|📖|🔍|📊/g, '') // Remove emojis
+      .replace(/📚|💡|🎯|📖|🔍|📊|📄|✅|❌|🌐|🔍/g, '') // Remove emojis
       .replace(/\n\n/g, '. ') // Replace double newlines with periods
       .replace(/\n/g, ' ') // Replace single newlines with spaces
       .trim();
@@ -150,17 +160,23 @@ export class VoiceService {
     return this.speak(cleanedResponse, language);
   }
 
-  static getAvailableVoices(): SpeechSynthesisVoice[] {
-    return this.synthesis.getVoices();
+  static forceStop(): void {
+    // Cancel all speech synthesis
+    this.synthesis.cancel();
+    this._isSpeaking = false;
+    this.currentUtterance = null;
   }
 
   static stopSpeaking(): void {
-    this.synthesis.cancel();
-    this._isSpeaking = false;
+    this.forceStop();
   }
 
   static isSpeaking(): boolean {
     return this._isSpeaking;
+  }
+
+  static getAvailableVoices(): SpeechSynthesisVoice[] {
+    return this.synthesis.getVoices();
   }
 
   static getAvailableLanguages(): { code: string; name: string }[] {
