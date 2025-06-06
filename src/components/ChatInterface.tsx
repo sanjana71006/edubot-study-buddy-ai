@@ -1,11 +1,10 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Send, Mic, MicOff, Upload, FileText, Languages, Volume2, Copy, Trash2, Play, Stop } from "lucide-react";
+import { MessageSquare, Send, Mic, MicOff, Upload, FileText, Languages, Volume2, Copy, Trash2, Play, Square } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { VoiceService } from "@/services/voiceService";
 import { TranslationService } from "@/services/translationService";
@@ -350,7 +349,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
                 onClick={stopSpeaking}
                 className="border-red-500 text-red-400 hover:bg-red-900/20"
               >
-                <Stop className="h-4 w-4" />
+                <Square className="h-4 w-4" />
               </Button>
             )}
             
@@ -403,7 +402,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
                       className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-gray-600"
                       onClick={stopSpeaking}
                     >
-                      <Stop className="h-3 w-3" />
+                      <Square className="h-3 w-3" />
                     </Button>
                   ) : (
                     <Button
