@@ -45,13 +45,6 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Initialize AI Service when component mounts
-    GeminiService.initialize().catch(error => {
-      console.error('Failed to initialize Gemini Service:', error);
-    });
-  }, []);
-
-  useEffect(() => {
     if (extractedText) {
       setCurrentContext(extractedText);
       addMessage(`📄 Text extracted and ready for questions:\n\n${extractedText}`, 'bot');
