@@ -4,12 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Send, Mic, MicOff, Upload, FileText, Languages, Volume2, Copy, Trash2, Play, Square } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { MessageSquare, Send, Mic, MicOff, Upload, FileText, Languages, Volume2, Copy, Trash2, Play, Square, Sun, Moon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { VoiceService } from "@/services/voiceService";
 import { TranslationService } from "@/services/translationService";
 import { OCRService } from "@/services/ocrService";
 import { GeminiService } from "@/services/geminiService";
+import { useTheme } from "@/contexts/ThemeContext";
+import FloatingBackground from "./FloatingBackground";
 import GeminiKeySetup from "./GeminiKeySetup";
 
 interface Message {
@@ -26,6 +30,8 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
+  const { isDark, toggleTheme } = useTheme();
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -277,25 +283,37 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className="flex flex-col h-[600px] max-w-4xl mx-auto bg-gray-900 text-white rounded-lg overflow-hidden">
+    <div className={`relative flex flex-col h-[600px] max-w-4xl mx-auto rounded-lg overflow-hidden transition-colors duration-300 ${
+      isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900 border border-gray-200'
+    }`}>
+      <FloatingBackground />
+      
       {/* API Key Setup */}
-      <div className="p-4 bg-gray-800">
+      <div className={`relative z-10 p-4 ${isDark ? 'bg-gray-800' : 'bg-gray-50 border-b'}`}>
         <GeminiKeySetup onApiKeySet={setHasGeminiKey} />
       </div>
 
       {/* Header with controls */}
-      <div className="bg-gradient-to-r from-gray-800 to-gray-700 p-4 border-b border-gray-600">
+      <div className={`relative z-10 p-4 border-b ${
+        isDark 
+          ? 'bg-gradient-to-r from-gray-800 to-gray-700 border-gray-600' 
+          : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
+      }`}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-blue-400" />
-            <span className="font-medium text-white">AI Study Assistant - All Subjects</span>
+            <MessageSquare className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+            <span className="font-medium">AI Study Assistant - All Subjects</span>
             {currentContext && (
-              <Badge variant="secondary" className="bg-green-600 text-white">
+              <Badge variant="secondary" className={`${
+                isDark ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800'
+              }`}>
                 Context Available
               </Badge>
             )}
             {hasGeminiKey && (
-              <Badge variant="secondary" className="bg-blue-600 text-white">
+              <Badge variant="secondary" className={`${
+                isDark ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'
+              }`}>
                 Gemini Powered
               </Badge>
             )}
@@ -309,64 +327,131 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
               onChange={handleImageUpload}
               className="hidden"
             />
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isProcessingImage}
-              className="border-gray-500 text-gray-200 hover:bg-gray-700"
-            >
-              <Upload className="h-4 w-4 mr-1" />
-              {isProcessingImage ? "Processing..." : "Upload Image"}
-            </Button>
             
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={summarizeCurrentContext}
-              className="border-gray-500 text-gray-200 hover:bg-gray-700"
-            >
-              <FileText className="h-4 w-4 mr-1" />
-              AI Summarize
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isProcessingImage}
+                  className={`${
+                    isDark 
+                      ? 'border-gray-500 text-gray-200 hover:bg-gray-700' 
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {isProcessingImage ? "Processing..." : "Upload Image"}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Upload an image to extract text from documents, notes, or photos</p>
+              </TooltipContent>
+            </Tooltip>
             
-            <select
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="px-2 py-1 text-sm border border-gray-500 rounded bg-gray-700 text-white"
-            >
-              <option value="">No Translation</option>
-              {Object.entries(TranslationService.getSupportedLanguages()).map(([code, name]) => (
-                <option key={code} value={code}>{name}</option>
-              ))}
-            </select>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={summarizeCurrentContext}
+                  className={`${
+                    isDark 
+                      ? 'border-gray-500 text-gray-200 hover:bg-gray-700' 
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Smart Summary
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Generate an intelligent AI summary of your current content</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <select
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className={`px-2 py-1 text-sm border rounded ${
+                    isDark 
+                      ? 'border-gray-500 bg-gray-700 text-white' 
+                      : 'border-gray-300 bg-white text-gray-900'
+                  }`}
+                >
+                  <option value="">No Translation</option>
+                  {Object.entries(TranslationService.getSupportedLanguages()).map(([code, name]) => (
+                    <option key={code} value={code}>{name}</option>
+                  ))}
+                </select>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Choose a language for automatic translation of responses</p>
+              </TooltipContent>
+            </Tooltip>
             
             {/* Global Speech Controls */}
             {isSpeaking && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={stopSpeaking}
-                className="border-red-500 text-red-400 hover:bg-red-900/20"
-              >
-                <Square className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={stopSpeaking}
+                    className="border-red-500 text-red-400 hover:bg-red-900/20"
+                  >
+                    <Square className="h-4 w-4 mr-1" />
+                    Stop Speaking
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Stop the current speech playback</p>
+                </TooltipContent>
+              </Tooltip>
             )}
             
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={clearChat}
-              className="border-gray-500 text-gray-200 hover:bg-gray-700"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={clearChat}
+                  className={`${
+                    isDark 
+                      ? 'border-gray-500 text-gray-200 hover:bg-gray-700' 
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clear Chat
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Clear all messages and start a fresh conversation</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Theme Toggle */}
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-300 dark:border-gray-600">
+              <Sun className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-yellow-500'}`} />
+              <Switch
+                checked={isDark}
+                onCheckedChange={toggleTheme}
+                className="data-[state=checked]:bg-blue-600"
+              />
+              <Moon className={`h-4 w-4 ${isDark ? 'text-blue-400' : 'text-gray-400'}`} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900">
+      <div className={`relative z-10 flex-1 overflow-y-auto p-4 space-y-4 ${
+        isDark ? 'bg-gray-900' : 'bg-gray-50'
+      }`}>
         {messages.map((message) => (
           <div
             key={message.id}
@@ -375,45 +460,78 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
             <div
               className={`max-w-[70%] p-3 rounded-lg ${
                 message.sender === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-sm'
-                  : 'bg-gray-700 text-gray-100 rounded-bl-sm border border-gray-600'
+                  ? isDark 
+                    ? 'bg-blue-600 text-white rounded-br-sm'
+                    : 'bg-blue-500 text-white rounded-br-sm'
+                  : isDark
+                    ? 'bg-gray-700 text-gray-100 rounded-bl-sm border border-gray-600'
+                    : 'bg-white text-gray-900 rounded-bl-sm border border-gray-200 shadow-sm'
               }`}
             >
               <div className="whitespace-pre-wrap break-words">{message.text}</div>
               <div className="flex items-center justify-between mt-2 gap-2">
-                <span className="text-xs opacity-70">
+                <span className={`text-xs ${isDark ? 'opacity-70' : 'opacity-60'}`}>
                   {message.timestamp.toLocaleTimeString()}
                 </span>
                 <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0 text-gray-300 hover:text-white hover:bg-gray-600"
-                    onClick={() => copyMessage(message.text)}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={`h-6 w-6 p-0 ${
+                          isDark 
+                            ? 'text-gray-300 hover:text-white hover:bg-gray-600' 
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                        }`}
+                        onClick={() => copyMessage(message.text)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Copy message to clipboard</p>
+                    </TooltipContent>
+                  </Tooltip>
                   
                   {/* Individual message speech controls */}
                   {speakingMessageId === message.id ? (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-gray-600"
-                      onClick={stopSpeaking}
-                    >
-                      <Square className="h-3 w-3" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-gray-600"
+                          onClick={stopSpeaking}
+                        >
+                          <Square className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Stop speaking</p>
+                      </TooltipContent>
+                    </Tooltip>
                   ) : (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0 text-gray-300 hover:text-white hover:bg-gray-600"
-                      onClick={() => speakMessage(message.id, message.text)}
-                      disabled={isSpeaking}
-                    >
-                      <Play className="h-3 w-3" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className={`h-6 w-6 p-0 ${
+                            isDark 
+                              ? 'text-gray-300 hover:text-white hover:bg-gray-600' 
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                          }`}
+                          onClick={() => speakMessage(message.id, message.text)}
+                          disabled={isSpeaking}
+                        >
+                          <Play className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Speak this message</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </div>
@@ -422,10 +540,18 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-700 border border-gray-600 p-3 rounded-lg rounded-bl-sm">
+            <div className={`p-3 rounded-lg rounded-bl-sm ${
+              isDark 
+                ? 'bg-gray-700 border border-gray-600' 
+                : 'bg-white border border-gray-200 shadow-sm'
+            }`}>
               <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
-                <span className="text-gray-200">AI is processing your question...</span>
+                <div className={`animate-spin rounded-full h-4 w-4 border-b-2 ${
+                  isDark ? 'border-blue-400' : 'border-blue-500'
+                }`}></div>
+                <span className={isDark ? 'text-gray-200' : 'text-gray-700'}>
+                  AI is processing your question...
+                </span>
               </div>
             </div>
           </div>
@@ -434,32 +560,55 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
       </div>
 
       {/* Input area */}
-      <div className="p-4 border-t border-gray-600 bg-gray-800">
+      <div className={`relative z-10 p-4 border-t ${
+        isDark 
+          ? 'border-gray-600 bg-gray-800' 
+          : 'border-gray-200 bg-gray-50'
+      }`}>
         <div className="flex gap-2">
           <Input
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Ask anything: Math, Science, Programming, Engineering, Biology, Physics, Chemistry..."
-            className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+            className={`flex-1 ${
+              isDark 
+                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+            }`}
             onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
             disabled={isLoading}
           />
-          <Button
-            onClick={handleVoiceInput}
-            variant="outline"
-            size="icon"
-            className={`border-gray-600 ${
-              isListening 
-                ? "bg-red-600/20 border-red-500 text-red-400" 
-                : "text-gray-300 hover:bg-gray-700"
-            }`}
-          >
-            {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-          </Button>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleVoiceInput}
+                variant="outline"
+                size="icon"
+                className={`${
+                  isListening 
+                    ? "bg-red-600/20 border-red-500 text-red-400" 
+                    : isDark
+                      ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                      : "border-gray-300 text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isListening ? "Stop voice recording" : "Start voice input"}</p>
+            </TooltipContent>
+          </Tooltip>
+          
           <Button 
             onClick={handleSendMessage} 
             disabled={isLoading || !inputMessage.trim()}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className={`${
+              isDark 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
           >
             <Send className="h-4 w-4" />
           </Button>
