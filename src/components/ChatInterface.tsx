@@ -9,7 +9,8 @@ import { toast } from "@/hooks/use-toast";
 import { VoiceService } from "@/services/voiceService";
 import { TranslationService } from "@/services/translationService";
 import { OCRService } from "@/services/ocrService";
-import { AIService } from "@/services/aiService";
+import { GeminiService } from "@/services/geminiService";
+import GeminiKeySetup from "./GeminiKeySetup";
 
 interface Message {
   id: number;
@@ -28,7 +29,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hi! I'm your AI Study Buddy. I can help you with questions about Mathematics, Science, Physics, Chemistry, Biology, Computer Science, Programming (Java, Python, C++, JavaScript, etc.), Machine Learning, Engineering, and much more! Upload images, ask questions, or request summaries. How can I assist you today? 😊",
+      text: "Hi! I'm your AI Study Buddy powered by Gemini AI. I can help you with questions about Mathematics, Science, Physics, Chemistry, Biology, Computer Science, Programming (Java, Python, C++, JavaScript, etc.), Machine Learning, Engineering, and much more! Upload images, ask questions, or request summaries. How can I assist you today? 😊",
       sender: 'bot',
       timestamp: new Date()
     }
@@ -39,13 +40,14 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
   const [currentContext, setCurrentContext] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [hasGeminiKey, setHasGeminiKey] = useState(GeminiService.hasApiKey());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Initialize AI Service when component mounts
-    AIService.initialize().catch(error => {
-      console.error('Failed to initialize AI Service:', error);
+    GeminiService.initialize().catch(error => {
+      console.error('Failed to initialize Gemini Service:', error);
     });
   }, []);
 
@@ -85,8 +87,16 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
     setIsLoading(true);
 
     try {
-      // Use the enhanced AI service for comprehensive responses
-      const response = await AIService.generateResponse(userMessage, currentContext);
+      let response: string;
+      
+      if (hasGeminiKey) {
+        // Use Gemini AI for advanced responses
+        response = await GeminiService.generateResponse(userMessage, currentContext);
+      } else {
+        // Basic fallback response
+        response = `I'd be happy to help with your question about "${userMessage}". For the most comprehensive and accurate answers across all academic subjects (Math, Science, Programming, etc.), please set up your Gemini API key above. This will unlock advanced AI tutoring capabilities!`;
+      }
+      
       addMessage(response, 'bot');
       
       // Auto-speak response
@@ -101,7 +111,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
       
     } catch (error) {
       console.error('AI Response Error:', error);
-      addMessage("I apologize, but I encountered an error processing your request. Please try again with a different phrasing or check your internet connection.", 'bot');
+      addMessage("I apologize, but I encountered an error processing your request. Please check your API key configuration and try again.", 'bot');
     } finally {
       setIsLoading(false);
     }
@@ -175,11 +185,20 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
       return;
     }
 
+    if (!hasGeminiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please set up your Gemini API key for AI summarization",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
-    addMessage("🧠 Creating an intelligent summary of the current content...", 'bot');
+    addMessage("🧠 Creating an intelligent summary with Gemini AI...", 'bot');
 
     try {
-      const summary = await AIService.summarizeText(currentContext);
+      const summary = await GeminiService.summarizeText(currentContext);
       setCurrentContext(summary);
       addMessage(`✅ AI-Generated Summary:\n\n${summary}`, 'bot');
       
@@ -192,7 +211,7 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
       }
       
     } catch (error) {
-      addMessage("❌ Failed to create summary. Please try again.", 'bot');
+      addMessage("❌ Failed to create summary. Please check your API key and try again.", 'bot');
     } finally {
       setIsLoading(false);
     }
@@ -222,6 +241,11 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
 
   return (
     <div className="flex flex-col h-[600px] max-w-4xl mx-auto">
+      {/* API Key Setup */}
+      <div className="mb-4">
+        <GeminiKeySetup onApiKeySet={setHasGeminiKey} />
+      </div>
+
       {/* Header with controls */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 border-b">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -231,6 +255,11 @@ const ChatInterface = ({ extractedText }: ChatInterfaceProps) => {
             {currentContext && (
               <Badge variant="secondary" className="bg-green-100 text-green-800">
                 Context Available
+              </Badge>
+            )}
+            {hasGeminiKey && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                Gemini Powered
               </Badge>
             )}
           </div>
