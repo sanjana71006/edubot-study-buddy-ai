@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { Brain, Lightbulb, FolderOpen, CircleHalf } from 'lucide-react';
+import { Brain, Lightbulb, FolderOpen, CircleHelp } from 'lucide-react';
 
 const FloatingBackground = () => {
   const icons = [
     { Icon: Brain, delay: '0s', x: '10%', y: '20%' },
     { Icon: Lightbulb, delay: '2s', x: '80%', y: '15%' },
     { Icon: FolderOpen, delay: '4s', x: '20%', y: '70%' },
-    { Icon: CircleHalf, delay: '6s', x: '75%', y: '60%' },
+    { Icon: CircleHelp, delay: '6s', x: '75%', y: '60%' },
     { Icon: Brain, delay: '8s', x: '50%', y: '80%' },
     { Icon: Lightbulb, delay: '10s', x: '90%', y: '40%' }
   ];
@@ -29,7 +29,7 @@ const FloatingBackground = () => {
         </div>
       ))}
       
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
           50% { transform: translateY(-20px) rotate(5deg); }
