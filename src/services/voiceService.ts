@@ -15,6 +15,8 @@ interface SpeechRecognition extends EventTarget {
   stop(): void;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
   onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onstart: ((event: Event) => void) | null;
+  onend: ((event: Event) => void) | null;
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -33,6 +35,7 @@ interface SpeechRecognitionResultList {
 interface SpeechRecognitionResult {
   [index: number]: SpeechRecognitionAlternative;
   length: number;
+  isFinal: boolean;
 }
 
 interface SpeechRecognitionAlternative {
@@ -50,7 +53,11 @@ export class VoiceService {
   private static synthesis: SpeechSynthesis = window.speechSynthesis;
   private static currentLanguage: string = 'en-US';
   private static _isSpeaking: boolean = false;
+  private static _isListening: boolean = false;
   private static currentUtterance: SpeechSynthesisUtterance | null = null;
+  private static interruptionKeywords: string[] = ['stop', 'pause', 'quiet', 'silence', 'enough'];
+  private static onInterruptionCallback: (() => void) | null = null;
+  private static continuousListening: boolean = false;
 
   static async initializeSpeechRecognition(language: string = 'en-US'): Promise<SpeechRecognition> {
     const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -60,18 +67,20 @@ export class VoiceService {
     }
     
     this.recognition = new SpeechRecognitionClass();
-    this.recognition.continuous = false;
-    this.recognition.interimResults = false;
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
     this.recognition.lang = language;
     this.currentLanguage = language;
     
     return this.recognition;
   }
 
-  static async startListening(language: string = 'en-US'): Promise<string> {
+  static async startListening(language: string = 'en-US', continuous: boolean = false): Promise<string> {
     if (!this.recognition || this.currentLanguage !== language) {
       await this.initializeSpeechRecognition(language);
     }
+    
+    this.continuousListening = continuous;
     
     return new Promise((resolve, reject) => {
       if (!this.recognition) {
@@ -79,13 +88,60 @@ export class VoiceService {
         return;
       }
       
+      let finalTranscript = '';
+      let interimTranscript = '';
+      
+      this.recognition.onstart = () => {
+        this._isListening = true;
+        console.log('Voice recognition started');
+      };
+      
       this.recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        resolve(transcript);
+        interimTranscript = '';
+        
+        for (let i = event.results.length - 1; i >= 0; i--) {
+          const transcript = event.results[i][0].transcript;
+          
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // Check for interruption keywords in real-time
+        const currentText = (finalTranscript + interimTranscript).toLowerCase().trim();
+        if (this.checkForInterruption(currentText)) {
+          this.handleVoiceInterruption();
+          if (!continuous) {
+            resolve('stop');
+            return;
+          }
+        }
+        
+        // For non-continuous mode, resolve when we have final results
+        if (!continuous && finalTranscript) {
+          resolve(finalTranscript.trim());
+        }
       };
       
       this.recognition.onerror = (event) => {
+        this._isListening = false;
         reject(new Error(`Speech recognition error: ${event.error}`));
+      };
+      
+      this.recognition.onend = () => {
+        this._isListening = false;
+        if (continuous && this.continuousListening) {
+          // Restart recognition for continuous listening
+          setTimeout(() => {
+            if (this.continuousListening) {
+              this.recognition?.start();
+            }
+          }, 100);
+        } else if (!continuous) {
+          resolve(finalTranscript.trim());
+        }
       };
       
       this.recognition.start();
@@ -93,9 +149,50 @@ export class VoiceService {
   }
 
   static stopListening(): void {
-    if (this.recognition) {
+    if (this.recognition && this._isListening) {
+      this.continuousListening = false;
       this.recognition.stop();
+      this._isListening = false;
     }
+  }
+
+  static startContinuousListening(language: string = 'en-US'): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        this.continuousListening = true;
+        await this.startListening(language, true);
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  static stopContinuousListening(): void {
+    this.continuousListening = false;
+    this.stopListening();
+  }
+
+  static isListening(): boolean {
+    return this._isListening;
+  }
+
+  private static checkForInterruption(text: string): boolean {
+    return this.interruptionKeywords.some(keyword => 
+      text.includes(keyword) && text.split(' ').length <= 3
+    );
+  }
+
+  private static handleVoiceInterruption(): void {
+    console.log('Voice interruption detected');
+    this.forceStop();
+    if (this.onInterruptionCallback) {
+      this.onInterruptionCallback();
+    }
+  }
+
+  static setInterruptionCallback(callback: (() => void) | null): void {
+    this.onInterruptionCallback = callback;
   }
 
   static async speak(text: string, lang: string = 'en-US', rate: number = 0.9): Promise<void> {
