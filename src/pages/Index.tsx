@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import LearningAnalytics from "@/components/LearningAnalytics";
 import FeatureCard from "@/components/FeatureCard";
 import SmartSummary from "@/components/SmartSummary";
 import { AIService } from "@/services/aiService";
+import ClusteringService from "@/services/clusteringService";
 
 const Index = () => {
   const [activeFeature, setActiveFeature] = useState<string>("chat");
@@ -59,6 +59,13 @@ const Index = () => {
   ];
 
   const handleFeatureClick = (featureId: string) => {
+    // Track module switch in analytics
+    ClusteringService.addInteraction(
+      'analytics',
+      `Switched to ${features.find(f => f.id === featureId)?.title}`,
+      'navigation'
+    );
+    
     setActiveFeature(featureId);
     toast({
       title: "Feature Selected",

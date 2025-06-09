@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Upload, Camera, FileText, Copy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { OCRService } from "@/services/ocrService";
+import { OCRService, ClusteringService } from "@/services/ocrService";
 
 interface OCRUploadProps {
   onTextExtracted: (text: string) => void;
@@ -26,6 +26,15 @@ const OCRUpload = ({ onTextExtracted }: OCRUploadProps) => {
       if (text.trim()) {
         setExtractedText(text);
         onTextExtracted(text);
+        
+        // Track OCR interaction
+        ClusteringService.addInteraction(
+          'ocr',
+          `Extracted text from image: ${file.name}`,
+          'image-processing',
+          text.substring(0, 100) + (text.length > 100 ? '...' : '')
+        );
+        
         toast({
           title: "Text Extracted Successfully!",
           description: "Your image has been processed and text extracted.",
