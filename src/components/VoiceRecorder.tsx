@@ -338,22 +338,48 @@ Answer:`;
     <div className="space-y-6">
       <div className="text-center">
         <Mic className="h-16 w-16 text-orange-600 mx-auto mb-4 animate-pulse" />
-        <h3 className="text-xl font-semibold mb-2">Intelligent Voice Assistant</h3>
-        <p className="text-muted-foreground">Have natural conversations with AI - just speak and get intelligent responses</p>
+        <h3 className="text-2xl font-bold mb-3 text-foreground">Intelligent Voice Assistant</h3>
+        <p className="text-lg font-semibold text-foreground bg-accent/50 p-3 rounded-lg border">
+          Have natural conversations with AI - just speak and get intelligent responses
+        </p>
       </div>
 
-      {/* Enhanced User Instructions */}
-      <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 border-2">
+      {/* Enhanced User Instructions with High Contrast */}
+      <Card className="bg-blue-50 dark:bg-blue-950/50 border-blue-300 dark:border-blue-600 border-2 shadow-lg">
         <CardContent className="p-6">
           <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-            <div className="space-y-2">
-              <h4 className="font-semibold text-blue-800 dark:text-blue-200 text-lg">How to Use Voice Assistant</h4>
-              <div className="space-y-1 text-blue-700 dark:text-blue-300">
-                <p className="flex items-center gap-2"><span className="text-xl">🎤</span> <strong>Say your question out loud</strong> - Ask anything academic!</p>
-                <p className="flex items-center gap-2"><span className="text-xl">🛑</span> <strong>Say "Stop", "Pause", or "That's enough"</strong> to interrupt</p>
-                <p className="flex items-center gap-2"><span className="text-xl">📄</span> <strong>Download conversation</strong> using the button below</p>
-                <p className="flex items-center gap-2"><span className="text-xl">🔄</span> <strong>Use Conversation Mode</strong> for natural back-and-forth chat</p>
+            <Info className="h-6 w-6 text-blue-700 dark:text-blue-300 mt-0.5 flex-shrink-0" />
+            <div className="space-y-3">
+              <h4 className="font-bold text-blue-900 dark:text-blue-100 text-xl">How to Use Voice Assistant</h4>
+              <div className="space-y-3 text-blue-800 dark:text-blue-200">
+                <div className="flex items-center gap-3 bg-white/50 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <span className="text-2xl">🎤</span> 
+                  <div>
+                    <p className="font-bold text-lg">Say your question out loud</p>
+                    <p className="text-base">Ask anything academic!</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 bg-white/50 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <span className="text-2xl">🛑</span> 
+                  <div>
+                    <p className="font-bold text-lg">Say "Stop", "Pause", or "That's enough"</p>
+                    <p className="text-base">to interrupt</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 bg-white/50 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <span className="text-2xl">📄</span> 
+                  <div>
+                    <p className="font-bold text-lg">Download conversation</p>
+                    <p className="text-base">using the button below</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 bg-white/50 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <span className="text-2xl">🔄</span> 
+                  <div>
+                    <p className="font-bold text-lg">Use Conversation Mode</p>
+                    <p className="text-base">for natural back-and-forth chat</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -361,27 +387,27 @@ Answer:`;
       </Card>
 
       {/* Voice Settings & Conversation Mode - Enhanced Styling */}
-      <Card className="border-2">
+      <Card className="border-2 shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Languages className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
+            <Languages className="h-6 w-6" />
             Voice Settings & Conversation Mode
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center gap-3">
-              <label className="text-sm font-bold text-foreground">Language:</label>
+              <label className="text-lg font-bold text-foreground">Language:</label>
               <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                <SelectTrigger className="w-48 h-12 bg-background border-2 border-primary/20 text-foreground font-bold shadow-md hover:bg-accent/50 transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20">
-                  <SelectValue className="font-bold" />
+                <SelectTrigger className="w-56 h-14 bg-card border-3 border-primary/40 text-foreground font-bold shadow-lg hover:bg-accent/80 transition-colors focus:border-primary focus:ring-4 focus:ring-primary/30 text-lg">
+                  <SelectValue className="font-bold text-lg" />
                 </SelectTrigger>
-                <SelectContent className="bg-background border-2 border-primary/20 shadow-xl z-50">
+                <SelectContent className="bg-card border-3 border-primary/40 shadow-2xl z-50">
                   {VoiceService.getAvailableLanguages().map(lang => (
                     <SelectItem 
                       key={lang.code} 
                       value={lang.code}
-                      className="font-bold hover:bg-accent/80 focus:bg-accent text-foreground py-3"
+                      className="font-bold hover:bg-accent/90 focus:bg-accent text-foreground py-4 text-lg"
                     >
                       {lang.name}
                     </SelectItem>
@@ -393,26 +419,26 @@ Answer:`;
             {!conversationMode ? (
               <Button 
                 onClick={startConversationMode}
-                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold shadow-lg"
+                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-bold shadow-lg text-lg h-14 px-6"
               >
-                <MessageSquare className="h-4 w-4 mr-2" />
+                <MessageSquare className="h-5 w-5 mr-2" />
                 Start Natural Conversation
               </Button>
             ) : (
               <Button 
                 onClick={stopConversationMode}
                 variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/20 font-bold"
+                className="border-red-400 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-950/30 font-bold text-lg h-14 px-6 border-2"
               >
-                <Pause className="h-4 w-4 mr-2" />
+                <Pause className="h-5 w-5 mr-2" />
                 End Conversation
               </Button>
             )}
           </div>
           
           {conversationMode && (
-            <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <p className="text-sm text-green-800 dark:text-green-300 font-semibold">
+            <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/30 border-2 border-green-300 dark:border-green-700 rounded-lg">
+              <p className="text-base text-green-900 dark:text-green-200 font-bold">
                 <strong>🎙️ Conversation Mode Active:</strong> I'm listening continuously. 
                 Just speak naturally and I'll respond intelligently with the same quality as the Chat Assistant. Say "stop", "pause", or "that's enough" anytime to interrupt.
               </p>
@@ -422,7 +448,7 @@ Answer:`;
       </Card>
 
       {/* Voice Recording Interface */}
-      <Card className="text-center border-2">
+      <Card className="text-center border-2 shadow-lg">
         <CardContent className="p-8">
           <div className="relative mb-6">
             <div className={`w-32 h-32 rounded-full mx-auto flex items-center justify-center transition-all duration-300 ${
@@ -463,10 +489,10 @@ Answer:`;
             {!conversationMode && !isListening && !isProcessing && !isPlaying ? (
               <Button
                 onClick={startListening}
-                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 transform hover:scale-105 transition-all duration-200 font-bold"
+                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 transform hover:scale-105 transition-all duration-200 font-bold text-lg h-14 px-8"
                 size="lg"
               >
-                <Mic className="h-5 w-5 mr-2" />
+                <Mic className="h-6 w-6 mr-2" />
                 Ask AI a Question
               </Button>
             ) : conversationMode && isListening ? (
@@ -478,8 +504,8 @@ Answer:`;
                   <div className="w-2 h-10 bg-green-500 rounded animate-pulse" style={{ animationDelay: "0.3s" }}></div>
                   <div className="w-2 h-4 bg-green-500 rounded animate-pulse" style={{ animationDelay: "0.4s" }}></div>
                 </div>
-                <p className="text-green-600 font-bold animate-pulse">🎙️ Listening for your question...</p>
-                <p className="text-sm text-muted-foreground font-medium">Say "stop", "pause", or "that's enough" to interrupt</p>
+                <p className="text-green-700 dark:text-green-300 font-bold text-xl animate-pulse">🎙️ Listening for your question...</p>
+                <p className="text-base text-foreground font-bold bg-accent/50 p-3 rounded-lg">Say "stop", "pause", or "that's enough" to interrupt</p>
               </div>
             ) : isListening ? (
               <div className="space-y-4">
@@ -490,31 +516,31 @@ Answer:`;
                   <div className="w-2 h-10 bg-red-500 rounded animate-pulse" style={{ animationDelay: "0.3s" }}></div>
                   <div className="w-2 h-4 bg-red-500 rounded animate-pulse" style={{ animationDelay: "0.4s" }}></div>
                 </div>
-                <p className="text-red-600 font-bold animate-pulse">🎤 Listening... Speak now!</p>
+                <p className="text-red-700 dark:text-red-300 font-bold text-xl animate-pulse">🎤 Listening... Speak now!</p>
                 <Button
                   onClick={stopListening}
                   variant="outline"
-                  className="border-red-300 text-red-600 hover:bg-red-50 font-bold"
+                  className="border-red-400 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-950/30 font-bold text-lg h-12 px-6 border-2"
                 >
-                  <Square className="h-4 w-4 mr-2" />
+                  <Square className="h-5 w-5 mr-2" />
                   Stop Recording
                 </Button>
               </div>
             ) : isProcessing ? (
               <div className="space-y-2">
-                <p className="text-blue-600 font-bold animate-pulse">🧠 Processing your question...</p>
-                <p className="text-sm text-muted-foreground">Generating intelligent response</p>
+                <p className="text-blue-700 dark:text-blue-300 font-bold text-xl animate-pulse">🧠 Processing your question...</p>
+                <p className="text-base text-foreground font-bold bg-accent/50 p-3 rounded-lg">Generating intelligent response</p>
               </div>
             ) : isPlaying ? (
               <div className="space-y-2">
-                <p className="text-purple-600 font-bold animate-pulse">🔊 AI is responding...</p>
-                <p className="text-sm text-muted-foreground font-medium">Say "stop", "pause", or "that's enough" to interrupt</p>
+                <p className="text-purple-700 dark:text-purple-300 font-bold text-xl animate-pulse">🔊 AI is responding...</p>
+                <p className="text-base text-foreground font-bold bg-accent/50 p-3 rounded-lg">Say "stop", "pause", or "that's enough" to interrupt</p>
                 <Button
                   onClick={() => VoiceService.forceStop()}
                   variant="outline"
-                  className="border-purple-300 text-purple-600 hover:bg-purple-50 font-bold"
+                  className="border-purple-400 text-purple-700 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-300 dark:hover:bg-purple-950/30 font-bold text-lg h-12 px-6 border-2"
                 >
-                  <Square className="h-4 w-4 mr-2" />
+                  <Square className="h-5 w-5 mr-2" />
                   Stop Speaking
                 </Button>
               </div>
@@ -523,82 +549,82 @@ Answer:`;
         </CardContent>
       </Card>
 
-      {/* Enhanced Conversation History with Download */}
+      {/* Enhanced Conversation History with High Contrast */}
       {conversations.length > 0 && (
-        <Card className="bg-slate-50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800 animate-fade-in border-2">
+        <Card className="bg-slate-50 dark:bg-slate-950/50 border-slate-300 dark:border-slate-600 animate-fade-in border-2 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                Full Conversation Transcript ({conversations.length} exchanges)
+                <MessageSquare className="h-6 w-6 text-slate-700 dark:text-slate-300" />
+                <span className="text-xl font-bold text-foreground">Full Conversation Transcript ({conversations.length} exchanges)</span>
               </div>
               <Button
                 onClick={downloadTranscript}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold shadow-lg"
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold shadow-lg text-lg h-12 px-6"
                 size="sm"
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-5 w-5 mr-2" />
                 Download Transcript
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 max-h-96 overflow-y-auto">
             {conversations.map((conv) => (
-              <div key={conv.id} className="bg-background p-4 rounded-lg border-2 shadow-sm">
-                <div className="space-y-3">
+              <div key={conv.id} className="bg-card p-5 rounded-lg border-2 shadow-md">
+                <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                      <Mic className="h-4 w-4 text-white" />
+                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                      <Mic className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-blue-600 dark:text-blue-400 font-bold mb-1">You asked:</p>
-                      <p className="text-foreground font-medium bg-blue-50 dark:bg-blue-950/20 p-3 rounded border">{conv.userInput}</p>
+                      <p className="text-base text-blue-700 dark:text-blue-300 font-bold mb-2">You asked:</p>
+                      <p className="text-foreground font-semibold bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-700 text-base">{conv.userInput}</p>
                     </div>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => copyToClipboard(conv.userInput)}
-                      className="hover:bg-accent"
+                      className="hover:bg-accent h-10 w-10"
                       title="Copy question"
                     >
-                      <Copy className="h-4 w-4" />
+                      <Copy className="h-5 w-5" />
                     </Button>
                   </div>
                   
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
-                      <Volume2 className="h-4 w-4 text-white" />
+                    <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                      <Volume2 className="h-5 w-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-purple-600 dark:text-purple-400 font-bold mb-1">EduBot responded:</p>
-                      <div className="text-foreground font-medium bg-purple-50 dark:bg-purple-950/20 p-3 rounded border max-h-40 overflow-y-auto">
+                      <p className="text-base text-purple-700 dark:text-purple-300 font-bold mb-2">EduBot responded:</p>
+                      <div className="text-foreground font-semibold bg-purple-50 dark:bg-purple-950/30 p-4 rounded-lg border-2 border-purple-200 dark:border-purple-700 max-h-40 overflow-y-auto text-base">
                         <p className="whitespace-pre-wrap">{conv.botResponse}</p>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-2">
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => replayResponse(conv.botResponse)}
                         disabled={isPlaying}
-                        className="hover:bg-accent"
+                        className="hover:bg-accent h-10 w-10"
                         title="Replay response"
                       >
-                        <Volume2 className="h-4 w-4" />
+                        <Volume2 className="h-5 w-5" />
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => copyToClipboard(conv.botResponse)}
-                        className="hover:bg-accent"
+                        className="hover:bg-accent h-10 w-10"
                         title="Copy response"
                       >
-                        <Copy className="h-4 w-4" />
+                        <Copy className="h-5 w-5" />
                       </Button>
                     </div>
                   </div>
                   
-                  <p className="text-xs text-muted-foreground font-medium bg-muted/30 p-2 rounded">
+                  <p className="text-sm text-foreground font-bold bg-muted/50 p-3 rounded-lg border">
                     📅 {conv.timestamp.toLocaleString()}
                   </p>
                 </div>
@@ -608,28 +634,28 @@ Answer:`;
         </Card>
       )}
 
-      {/* Last Recorded Text */}
+      {/* Last Recorded Text with High Contrast */}
       {recordedText && (
-        <Card className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800 animate-fade-in border-2">
+        <Card className="bg-orange-50 dark:bg-orange-950/50 border-orange-300 dark:border-orange-600 animate-fade-in border-2 shadow-lg">
           <CardContent className="p-6">
-            <h4 className="font-bold text-orange-800 dark:text-orange-300 mb-3">📝 Last Question</h4>
-            <div className="bg-background p-4 rounded-lg border-2 border-orange-200 dark:border-orange-800 mb-4">
-              <p className="text-foreground font-medium">{recordedText}</p>
+            <h4 className="font-bold text-orange-900 dark:text-orange-200 mb-4 text-xl">📝 Last Question</h4>
+            <div className="bg-card p-5 rounded-lg border-2 border-orange-300 dark:border-orange-600 mb-4">
+              <p className="text-foreground font-semibold text-base">{recordedText}</p>
             </div>
             <div className="flex space-x-3">
               <Button
                 onClick={playRecording}
                 disabled={isPlaying}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold"
+                className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold text-lg h-12"
               >
                 {isPlaying ? (
                   <>
-                    <Volume2 className="h-4 w-4 mr-2 animate-pulse" />
+                    <Volume2 className="h-5 w-5 mr-2 animate-pulse" />
                     Playing...
                   </>
                 ) : (
                   <>
-                    <Play className="h-4 w-4 mr-2" />
+                    <Play className="h-5 w-5 mr-2" />
                     Replay Question
                   </>
                 )}
@@ -637,9 +663,9 @@ Answer:`;
               <Button
                 onClick={() => translateAndSpeak(recordedText)}
                 variant="outline"
-                className="border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-950/30 font-bold"
+                className="border-orange-400 dark:border-orange-500 text-orange-800 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-950/30 font-bold text-lg h-12 px-6 border-2"
               >
-                <Languages className="h-4 w-4 mr-2" />
+                <Languages className="h-5 w-5 mr-2" />
                 Translate
               </Button>
             </div>
@@ -647,28 +673,28 @@ Answer:`;
         </Card>
       )}
 
-      {/* Current AI Response */}
+      {/* Current AI Response with High Contrast */}
       {currentResponse && (
-        <Card className="bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800 animate-fade-in border-2">
+        <Card className="bg-purple-50 dark:bg-purple-950/50 border-purple-300 dark:border-purple-600 animate-fade-in border-2 shadow-lg">
           <CardContent className="p-6">
-            <h4 className="font-bold text-purple-800 dark:text-purple-300 mb-3">🤖 AI Response (Chat Assistant Quality)</h4>
-            <div className="bg-background p-4 rounded-lg border-2 border-purple-200 dark:border-purple-800 mb-4 max-h-64 overflow-y-auto">
-              <p className="text-foreground font-medium whitespace-pre-wrap">{currentResponse}</p>
+            <h4 className="font-bold text-purple-900 dark:text-purple-200 mb-4 text-xl">🤖 AI Response (Chat Assistant Quality)</h4>
+            <div className="bg-card p-5 rounded-lg border-2 border-purple-300 dark:border-purple-600 mb-4 max-h-64 overflow-y-auto">
+              <p className="text-foreground font-semibold whitespace-pre-wrap text-base">{currentResponse}</p>
             </div>
             <div className="flex gap-3">
               <Button
                 onClick={() => replayResponse(currentResponse)}
                 disabled={isPlaying}
-                className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold"
+                className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-lg h-12 px-6"
               >
                 {isPlaying ? (
                   <>
-                    <Volume2 className="h-4 w-4 mr-2 animate-pulse" />
+                    <Volume2 className="h-5 w-5 mr-2 animate-pulse" />
                     Playing...
                   </>
                 ) : (
                   <>
-                    <Play className="h-4 w-4 mr-2" />
+                    <Play className="h-5 w-5 mr-2" />
                     Replay Response
                   </>
                 )}
@@ -676,9 +702,9 @@ Answer:`;
               <Button
                 onClick={() => copyToClipboard(currentResponse)}
                 variant="outline"
-                className="border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-950/30 font-bold"
+                className="border-purple-400 dark:border-purple-500 text-purple-800 dark:text-purple-200 hover:bg-purple-100 dark:hover:bg-purple-950/30 font-bold text-lg h-12 px-6 border-2"
               >
-                <Copy className="h-4 w-4 mr-2" />
+                <Copy className="h-5 w-5 mr-2" />
                 Copy Response
               </Button>
             </div>
@@ -692,7 +718,7 @@ Answer:`;
           <Button
             onClick={clearRecording}
             variant="outline"
-            className="border-border text-muted-foreground hover:bg-accent font-bold"
+            className="border-2 border-border text-foreground hover:bg-accent font-bold text-lg h-12 px-8"
           >
             Clear All Data
           </Button>
