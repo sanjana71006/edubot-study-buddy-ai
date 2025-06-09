@@ -1,4 +1,3 @@
-
 // Add type declarations for Speech API
 declare global {
   interface Window {
@@ -55,7 +54,11 @@ export class VoiceService {
   private static _isSpeaking: boolean = false;
   private static _isListening: boolean = false;
   private static currentUtterance: SpeechSynthesisUtterance | null = null;
-  private static interruptionKeywords: string[] = ['stop', 'pause', 'quiet', 'silence', 'enough'];
+  // Enhanced interruption keywords for better voice control
+  private static interruptionKeywords: string[] = [
+    'stop', 'pause', 'quiet', 'silence', 'enough', 'halt', 'wait',
+    "that's enough", "stop talking", "be quiet", "shut up", "cancel"
+  ];
   private static onInterruptionCallback: (() => void) | null = null;
   private static continuousListening: boolean = false;
 
@@ -109,9 +112,10 @@ export class VoiceService {
           }
         }
         
-        // Check for interruption keywords in real-time
+        // Enhanced real-time interruption detection with more keywords
         const currentText = (finalTranscript + interimTranscript).toLowerCase().trim();
         if (this.checkForInterruption(currentText)) {
+          console.log('Interruption detected:', currentText);
           this.handleVoiceInterruption();
           if (!continuous) {
             resolve('stop');
@@ -177,14 +181,17 @@ export class VoiceService {
     return this._isListening;
   }
 
+  // Enhanced interruption detection with more flexible matching
   private static checkForInterruption(text: string): boolean {
-    return this.interruptionKeywords.some(keyword => 
-      text.includes(keyword) && text.split(' ').length <= 3
-    );
+    return this.interruptionKeywords.some(keyword => {
+      // Check if the keyword appears as a standalone word or phrase
+      const regex = new RegExp(`\\b${keyword.replace(/'/g, "'")}\\b`, 'i');
+      return regex.test(text) && text.split(' ').length <= 5; // Allow up to 5 words for phrases
+    });
   }
 
   private static handleVoiceInterruption(): void {
-    console.log('Voice interruption detected');
+    console.log('Voice interruption detected - force stopping speech');
     this.forceStop();
     if (this.onInterruptionCallback) {
       this.onInterruptionCallback();
@@ -258,7 +265,7 @@ export class VoiceService {
   }
 
   static forceStop(): void {
-    // Cancel all speech synthesis
+    // Cancel all speech synthesis immediately
     this.synthesis.cancel();
     this._isSpeaking = false;
     this.currentUtterance = null;
