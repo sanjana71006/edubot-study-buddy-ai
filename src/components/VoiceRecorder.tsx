@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mic, MicOff, Volume2, Square, Play, Languages, MessageSquare, Pause } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { VoiceService } from "@/services/voiceService";
@@ -136,13 +137,29 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
         return;
       }
 
-      // Generate intelligent AI response using Gemini
+      // Generate intelligent AI response using Gemini - EXACTLY like Chat Assistant
       let aiResponse: string;
       
       if (GeminiService.hasApiKey()) {
-        aiResponse = await GeminiService.generateResponse(userInput);
+        // Use the same comprehensive prompt as Chat Assistant for consistency
+        const enhancedPrompt = `You are EduBot, an expert AI tutor specializing in comprehensive educational support across all academic subjects including Mathematics, Science, Physics, Chemistry, Biology, Computer Science, Programming (Java, Python, C++, JavaScript, etc.), Machine Learning, Data Science, Engineering, Literature, History, and more.
+
+User Question: ${userInput}
+
+Provide a detailed, educational response that:
+- Gives comprehensive explanations with examples
+- Shows step-by-step solutions for math/science problems
+- Provides practical code examples for programming questions
+- Includes real-world applications and analogies
+- Uses clear, encouraging, and educational language
+- Covers the topic thoroughly like a knowledgeable tutor would
+- Is structured and easy to follow when spoken aloud
+
+Answer:`;
+        
+        aiResponse = await GeminiService.generateResponse(enhancedPrompt);
       } else {
-        aiResponse = `I understand you're asking about "${userInput}". For the most comprehensive and intelligent responses across all academic subjects, please set up your Gemini API key. I can help with Math, Science, Programming, Engineering, and much more with advanced AI capabilities!`;
+        aiResponse = `I understand you're asking about "${userInput}". For the most comprehensive and intelligent responses across all academic subjects, please set up your Gemini API key in the settings. I can help with Math, Science, Programming, Engineering, and much more with advanced AI capabilities when properly configured!`;
       }
       
       setCurrentResponse(aiResponse);
@@ -266,11 +283,11 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
       <div className="text-center">
         <Mic className="h-16 w-16 text-orange-600 mx-auto mb-4 animate-pulse" />
         <h3 className="text-xl font-semibold mb-2">Intelligent Voice Assistant</h3>
-        <p className="text-gray-600">Have natural conversations with AI - just speak and get intelligent responses</p>
+        <p className="text-muted-foreground">Have natural conversations with AI - just speak and get intelligent responses</p>
       </div>
 
       {/* Voice Settings & Conversation Mode */}
-      <Card>
+      <Card className="border-2">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Languages className="h-5 w-5" />
@@ -279,23 +296,30 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Language:</label>
-              <select 
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="px-3 py-2 border rounded-md"
-              >
-                {VoiceService.getAvailableLanguages().map(lang => (
-                  <option key={lang.code} value={lang.code}>{lang.name}</option>
-                ))}
-              </select>
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-semibold text-foreground">Language:</label>
+              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                <SelectTrigger className="w-48 h-10 bg-background border-2 border-border text-foreground font-medium shadow-sm hover:bg-accent/50 transition-colors">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-2 border-border shadow-lg">
+                  {VoiceService.getAvailableLanguages().map(lang => (
+                    <SelectItem 
+                      key={lang.code} 
+                      value={lang.code}
+                      className="font-medium hover:bg-accent/80 focus:bg-accent text-foreground"
+                    >
+                      {lang.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             {!conversationMode ? (
               <Button 
                 onClick={startConversationMode}
-                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
+                className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold"
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Start Natural Conversation
@@ -304,7 +328,7 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
               <Button 
                 onClick={stopConversationMode}
                 variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
+                className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/20 font-semibold"
               >
                 <Pause className="h-4 w-4 mr-2" />
                 End Conversation
@@ -313,10 +337,10 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
           </div>
           
           {conversationMode && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-800">
+            <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <p className="text-sm text-green-800 dark:text-green-300 font-medium">
                 <strong>🎙️ Conversation Mode Active:</strong> I'm listening continuously. 
-                Just speak naturally and I'll respond intelligently. Say "stop" anytime to interrupt or pause.
+                Just speak naturally and I'll respond intelligently with the same quality as the Chat Assistant. Say "stop" anytime to interrupt or pause.
               </p>
             </div>
           )}
@@ -324,7 +348,7 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
       </Card>
 
       {/* Voice Recording Interface */}
-      <Card className="text-center">
+      <Card className="text-center border-2">
         <CardContent className="p-8">
           <div className="relative mb-6">
             <div className={`w-32 h-32 rounded-full mx-auto flex items-center justify-center transition-all duration-300 ${
@@ -427,17 +451,17 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
 
       {/* Last Recorded Text */}
       {recordedText && (
-        <Card className="bg-orange-50 border-orange-200 animate-fade-in">
+        <Card className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-800 animate-fade-in border-2">
           <CardContent className="p-6">
-            <h4 className="font-medium text-orange-800 mb-3">📝 Last Question</h4>
-            <div className="bg-white p-4 rounded-lg border border-orange-200 mb-4">
-              <p className="text-gray-800">{recordedText}</p>
+            <h4 className="font-semibold text-orange-800 dark:text-orange-300 mb-3">📝 Last Question</h4>
+            <div className="bg-background p-4 rounded-lg border-2 border-orange-200 dark:border-orange-800 mb-4">
+              <p className="text-foreground font-medium">{recordedText}</p>
             </div>
             <div className="flex space-x-3">
               <Button
                 onClick={playRecording}
                 disabled={isPlaying}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+                className="flex-1 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold"
               >
                 {isPlaying ? (
                   <>
@@ -454,7 +478,7 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
               <Button
                 onClick={() => translateAndSpeak(recordedText)}
                 variant="outline"
-                className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                className="border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-950/30 font-semibold"
               >
                 <Languages className="h-4 w-4 mr-2" />
                 Translate
@@ -466,16 +490,16 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
 
       {/* Current AI Response */}
       {currentResponse && (
-        <Card className="bg-purple-50 border-purple-200 animate-fade-in">
+        <Card className="bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800 animate-fade-in border-2">
           <CardContent className="p-6">
-            <h4 className="font-medium text-purple-800 mb-3">🤖 AI Response</h4>
-            <div className="bg-white p-4 rounded-lg border border-purple-200 mb-4">
-              <p className="text-gray-800">{currentResponse}</p>
+            <h4 className="font-semibold text-purple-800 dark:text-purple-300 mb-3">🤖 AI Response (Chat Assistant Quality)</h4>
+            <div className="bg-background p-4 rounded-lg border-2 border-purple-200 dark:border-purple-800 mb-4 max-h-64 overflow-y-auto">
+              <p className="text-foreground font-medium whitespace-pre-wrap">{currentResponse}</p>
             </div>
             <Button
               onClick={() => replayResponse(currentResponse)}
               disabled={isPlaying}
-              className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+              className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold"
             >
               {isPlaying ? (
                 <>
@@ -495,24 +519,24 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
 
       {/* Voice Conversation History */}
       {conversations.length > 0 && (
-        <Card className="bg-blue-50 border-blue-200 animate-fade-in">
+        <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 animate-fade-in border-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-blue-600" />
+              <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               Conversation History
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {conversations.slice(-5).map((conv) => (
-              <div key={conv.id} className="bg-white p-4 rounded-lg border">
+              <div key={conv.id} className="bg-background p-4 rounded-lg border-2">
                 <div className="space-y-3">
                   <div className="flex items-start gap-2">
                     <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
                       <Mic className="h-3 w-3 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-blue-600 font-medium">You asked:</p>
-                      <p className="text-gray-800">{conv.userInput}</p>
+                      <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold">You asked:</p>
+                      <p className="text-foreground font-medium">{conv.userInput}</p>
                     </div>
                   </div>
                   
@@ -521,20 +545,21 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
                       <Volume2 className="h-3 w-3 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-purple-600 font-medium">AI responded:</p>
-                      <p className="text-gray-800">{conv.botResponse}</p>
+                      <p className="text-sm text-purple-600 dark:text-purple-400 font-semibold">AI responded:</p>
+                      <p className="text-foreground font-medium max-h-32 overflow-y-auto">{conv.botResponse}</p>
                     </div>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => replayResponse(conv.botResponse)}
                       disabled={isPlaying}
+                      className="hover:bg-accent"
                     >
                       <Volume2 className="h-4 w-4" />
                     </Button>
                   </div>
                   
-                  <p className="text-xs text-gray-500">{conv.timestamp.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">{conv.timestamp.toLocaleString()}</p>
                 </div>
               </div>
             ))}
@@ -548,7 +573,7 @@ const VoiceRecorder = ({ isListening, onListeningChange }: VoiceRecorderProps) =
           <Button
             onClick={clearRecording}
             variant="outline"
-            className="border-gray-300 text-gray-600 hover:bg-gray-50"
+            className="border-border text-muted-foreground hover:bg-accent font-semibold"
           >
             Clear All Data
           </Button>
